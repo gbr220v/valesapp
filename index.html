@@ -427,11 +427,27 @@ alter table logs disable row level security;</div>
   <div class="mo-box wide">
     <div class="mo-hdr"><div class="mo-title" id="mo-vale-t">Vale</div><button class="mo-x" onclick="closeMo('mo-vale')">×</button></div>
     <div class="fr"><div class="fg"><label>Fornecedor *</label><select id="vv-forn" onchange="updVencHint()"></select></div><div class="fg"><label>Data da retirada *</label><input type="date" id="vv-data" onchange="updVencHint()"></div></div>
+    <div class="fg" style="margin-bottom:6px"><label>Produtos *</label></div>
+    <div style="border:1.5px solid var(--brd2);border-radius:var(--r);overflow:hidden;margin-bottom:13px">
+      <table style="width:100%;border-collapse:collapse;font-size:12px" id="prod-table">
+        <thead><tr style="background:var(--bg)">
+          <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--bg2)">Produto / Descrição</th>
+          <th style="padding:8px 10px;text-align:center;font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--bg2);width:80px">Qtd.</th>
+          <th style="padding:8px 10px;text-align:right;font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--bg2);width:110px">Vl. Unit. (R$)</th>
+          <th style="padding:8px 10px;text-align:right;font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--bg2);width:110px">Subtotal</th>
+          <th style="width:36px;border-bottom:1px solid var(--bg2)"></th>
+        </tr></thead>
+        <tbody id="prod-tbody"></tbody>
+      </table>
+      <div style="padding:8px 10px;border-top:1px solid var(--bg2);display:flex;align-items:center;justify-content:space-between;background:var(--bg)">
+        <button type="button" class="btn btn-sm" onclick="addProdRow()" style="font-size:11px">+ Adicionar produto</button>
+        <div style="font-size:13px;font-weight:700;color:var(--c1)">Total: <span id="prod-total" style="font-family:'DM Mono',monospace">R$ 0,00</span></div>
+      </div>
+    </div>
     <div class="fr">
-      <div class="fg"><label>Valor total (R$) *</label><input type="number" id="vv-valor" step="0.01" min="0"></div>
+      <div class="fg"><label>Valor total (R$) — calculado automaticamente</label><input type="number" id="vv-valor" step="0.01" min="0" readonly style="background:var(--bg);font-weight:700;color:var(--c1)"></div>
       <div class="fg"><label>Forma de pgto (sobrescreve padrão)</label><select id="vv-pgto"><option value="">— Usar padrão do fornecedor —</option><option>PIX</option><option>Cheque</option><option>Cartão</option><option>Dinheiro</option></select></div>
     </div>
-    <div class="fg"><label>Produtos / Descrição *</label><textarea id="vv-desc"></textarea></div>
     <div class="fg"><label>Observações internas</label><textarea id="vv-obs"></textarea></div>
     <div id="vv-hint" class="fhint"></div>
     <div class="btns" style="justify-content:flex-end"><button class="btn" onclick="closeMo('mo-vale')">Cancelar</button><button class="btn btn-primary" onclick="saveVale()" id="btn-save-vale">Salvar vale</button></div>
@@ -913,6 +929,75 @@ function renderValeItem(v){
     <div class="btns">${acts}</div>
   </div>`;
 }
+// ── PRODUTO ROWS ──
+let prodRows=[];
+function addProdRow(nome='',qtd='',unit=''){
+  const id='p'+Date.now()+Math.random().toString(36).slice(2,5);
+  prodRows.push({id});
+  const tr=document.createElement('tr');
+  tr.id='pr-'+id;
+  tr.style.borderBottom='1px solid var(--bg2)';
+  tr.innerHTML=`
+    <td style="padding:6px 8px"><input type="text" value="${nome.replace(/"/g,'&quot;')}" placeholder="Ex: Sapato nº 38 preto" oninput="updProdTotal()" style="width:100%;padding:6px 8px;border:1.5px solid var(--brd2);border-radius:6px;font-size:12px;font-family:'Sora',sans-serif;background:var(--surf);color:var(--t1)" data-role="nome"></td>
+    <td style="padding:6px 8px"><input type="number" value="${qtd}" min="0" step="0.001" placeholder="0" oninput="updProdTotal()" style="width:100%;padding:6px 8px;border:1.5px solid var(--brd2);border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;text-align:center;background:var(--surf);color:var(--t1)" data-role="qtd"></td>
+    <td style="padding:6px 8px"><input type="number" value="${unit}" min="0" step="0.01" placeholder="0,00" oninput="updProdTotal()" style="width:100%;padding:6px 8px;border:1.5px solid var(--brd2);border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;text-align:right;background:var(--surf);color:var(--t1)" data-role="unit"></td>
+    <td style="padding:6px 8px;text-align:right;font-size:12px;font-weight:600;color:var(--c1);font-family:'DM Mono',monospace;white-space:nowrap" id="sub-${id}">R$ 0,00</td>
+    <td style="padding:6px 8px;text-align:center"><button type="button" onclick="removeProdRow('${id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;border-radius:4px" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--t3)'">×</button></td>`;
+  document.getElementById('prod-tbody').appendChild(tr);
+  updProdTotal();
+}
+function removeProdRow(id){
+  document.getElementById('pr-'+id)?.remove();
+  prodRows=prodRows.filter(r=>r.id!==id);
+  updProdTotal();
+}
+function updProdTotal(){
+  let total=0;
+  document.querySelectorAll('#prod-tbody tr').forEach(tr=>{
+    const qtd=parseFloat(tr.querySelector('[data-role=qtd]')?.value||0);
+    const unit=parseFloat(tr.querySelector('[data-role=unit]')?.value||0);
+    const sub=qtd*unit;
+    total+=sub;
+    const sid=tr.id.replace('pr-','');
+    const subEl=document.getElementById('sub-'+sid);
+    if(subEl)subEl.textContent='R$ '+sub.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  });
+  document.getElementById('prod-total').textContent='R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('vv-valor').value=total.toFixed(2);
+}
+function getProdDesc(){
+  const rows=[];
+  document.querySelectorAll('#prod-tbody tr').forEach(tr=>{
+    const nome=tr.querySelector('[data-role=nome]')?.value?.trim()||'';
+    const qtd=parseFloat(tr.querySelector('[data-role=qtd]')?.value||0);
+    const unit=parseFloat(tr.querySelector('[data-role=unit]')?.value||0);
+    if(nome||qtd||unit)rows.push(`${nome} (${qtd}x R$${unit.toLocaleString('pt-BR',{minimumFractionDigits:2})} = R$${(qtd*unit).toLocaleString('pt-BR',{minimumFractionDigits:2})})`);
+  });
+  return rows.join(' | ');
+}
+function loadProdRows(descricao){
+  // Try to parse saved description back into rows
+  document.getElementById('prod-tbody').innerHTML='';
+  prodRows=[];
+  if(descricao){
+    const parts=descricao.split(' | ');
+    let parsed=false;
+    parts.forEach(p=>{
+      const m=p.match(/^(.+?)\s*\((\d+(?:[.,]\d+)?)x\s*R\$(\d+(?:[.,]\d+)?)\s*=/);
+      if(m){
+        const nome=m[1].trim();
+        const qtd=m[2].replace(',','.');
+        const unit=m[3].replace(',','.');
+        addProdRow(nome,qtd,unit);
+        parsed=true;
+      }
+    });
+    if(!parsed) addProdRow(descricao,'','');
+  } else {
+    addProdRow();
+  }
+}
+// ── VALE MODAL ──
 function openValeModal(id){
   editValeId=id||null;
   document.getElementById('mo-vale-t').textContent=id?'Editar Vale':'Novo Vale';
@@ -920,11 +1005,12 @@ function openValeModal(id){
   const v=id?DB.vales.find(x=>x.id===id):null;
   document.getElementById('vv-forn').value=v?.forn_id||'';
   document.getElementById('vv-data').value=v?.data||today();
-  document.getElementById('vv-valor').value=v?.valor_original||'';
   document.getElementById('vv-pgto').value=v?.pgto||'';
-  document.getElementById('vv-desc').value=v?.descricao||'';
   document.getElementById('vv-obs').value=v?.obs||'';
+  loadProdRows(v?.descricao||'');
+  if(v?.valor_original){document.getElementById('vv-valor').value=v.valor_original}
   updVencHint();openMo('mo-vale');
+  setTimeout(()=>document.querySelector('#prod-tbody input[data-role=nome]')?.focus(),100);
 }
 function updVencHint(){
   const f=DB.fornecedores.find(x=>x.id===document.getElementById('vv-forn').value);
@@ -935,9 +1021,11 @@ async function saveVale(){
   const fid=document.getElementById('vv-forn').value;
   const dt=document.getElementById('vv-data').value;
   const val=parseFloat(document.getElementById('vv-valor').value);
-  if(!fid||!dt||!val){alert('Preencha fornecedor, data e valor.');return}
+  const desc=getProdDesc();
+  if(!fid||!dt){alert('Preencha fornecedor e data.');return}
+  if(!val||val<=0){alert('Adicione ao menos um produto com quantidade e valor.');return}
   const f=DB.fornecedores.find(x=>x.id===fid);
-  const obj={forn_id:fid,data:dt,valor_original:val,pgto:document.getElementById('vv-pgto').value,descricao:document.getElementById('vv-desc').value,obs:document.getElementById('vv-obs').value,vencimento:addDays(dt,f?.prazo||0),status:'aberto',created_by:CU.id};
+  const obj={forn_id:fid,data:dt,valor_original:val,pgto:document.getElementById('vv-pgto').value,descricao:desc,obs:document.getElementById('vv-obs').value,vencimento:addDays(dt,f?.prazo||0),status:'aberto',created_by:CU.id};
   try{
     if(editValeId){await API.upd('vales',editValeId,obj);addLog('up','Vale editado',f?.nome+' · '+fmtR(val))}
     else{await API.ins('vales',obj);addLog('cr','Vale criado',f?.nome+' · '+fmtR(val)+' · vence '+fmtD(obj.vencimento))}
