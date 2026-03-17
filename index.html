@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>ValesApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;-webkit-tap-highlight-color:transparent}
+body{font-family:'Sora',sans-serif;background:#F2EFE9;color:#1C1A17;line-height:1.55;min-height:100vh}
+:root{
+  --c1:#B8701A;--c1d:#7A4A0F;--c1l:#FBF0E0;--c1m:#F0C07A;
+  --red:#9B2C2C;--redl:#FEF0F0;--redb:#F5BFBF;
+  --grn:#2D6A0F;--grnl:#EDFAE0;--grnb:#AEDBA0;
+  --blu:#164F8C;--blul:#EBF3FD;--blub:#9DC8F0;
+  --purp:#3D2FA0;--purpl:#EEEEFF;--purpb:#B0A8F0;
+  --teal:#0B5C4A;--teall:#E0F7F3;--tealb:#7FD4C4;
+  --rose:#8C2556;--rosel:#FDE8F2;--roseb:#F0A8D0;
+  --brd:rgba(0,0,0,.09);--brd2:rgba(0,0,0,.16);
+  --t1:#1C1A17;--t2:#6B6560;--t3:#A09890;
+  --bg:#F2EFE9;--bg2:#E8E4DD;--surf:#FFFFFF;
+  --nav:234px;--r:8px;--rl:12px;--rxl:18px
+}
+/* ─── SETUP SCREEN ─── */
+#setup-wrap{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
+.setup-card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rxl);padding:36px 32px;max-width:640px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.07)}
+.setup-card h2{font-size:19px;font-weight:700;color:var(--c1);margin-bottom:6px}
+.setup-card .sub{font-size:13px;color:var(--t2);margin-bottom:22px}
+.step-n{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--c1l);color:var(--c1d);font-size:11px;font-weight:700;flex-shrink:0;margin-right:8px}
+.step{display:flex;align-items:flex-start;gap:0;margin-bottom:16px;font-size:13px;color:var(--t1)}
+.step-body{flex:1}
+.step-body strong{font-weight:600}
+.sql-block{background:#1C1A17;color:#A0D080;font-family:'DM Mono',monospace;font-size:11px;padding:14px;border-radius:var(--r);margin-top:8px;white-space:pre;overflow-x:auto;line-height:1.7;max-height:220px;overflow-y:auto}
+.sep{height:1px;background:var(--bg2);margin:20px 0}
+.cfg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.cfg-row{grid-template-columns:1fr}}
+/* ─── LOGIN ─── */
+#login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px}
+.login-card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rxl);padding:44px 38px;width:100%;max-width:380px;box-shadow:0 4px 24px rgba(0,0,0,.07)}
+.login-brand{text-align:center;margin-bottom:34px}
+.lmark{width:56px;height:56px;background:var(--c1l);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:26px}
+.login-brand h1{font-size:22px;font-weight:700;color:var(--c1);letter-spacing:-.5px}
+.login-brand p{font-size:12px;color:var(--t3);margin-top:3px}
+.usel-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t2);text-align:center;margin-bottom:10px}
+.upills{display:flex;gap:7px;justify-content:center;margin-bottom:22px}
+.upill{flex:1;padding:10px 6px;border-radius:var(--r);border:1.5px solid var(--brd2);cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;background:transparent;color:var(--t2);font-family:'Sora',sans-serif;text-align:center}
+.upill:hover{border-color:var(--c1m);background:var(--c1l);color:var(--c1d)}
+.upill.sel{border-color:var(--c1);background:var(--c1l);color:var(--c1d);font-weight:600}
+.lf label{display:block;font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.lf input{width:100%;padding:10px 12px;border:1.5px solid var(--brd2);border-radius:var(--r);font-size:14px;font-family:'Sora',sans-serif;outline:none;transition:border .15s;background:var(--surf);color:var(--t1);margin-bottom:13px}
+.lf input:focus{border-color:var(--c1)}
+.lerr{font-size:12px;color:var(--red);text-align:center;min-height:18px;margin-bottom:8px}
+.btn-login{width:100%;padding:12px;border-radius:var(--r);border:none;background:var(--c1);color:#fff;font-size:14px;font-weight:600;font-family:'Sora',sans-serif;cursor:pointer;transition:all .15s}
+.btn-login:hover{background:var(--c1d);transform:translateY(-1px)}
+.login-setup-link{text-align:center;margin-top:14px;font-size:12px;color:var(--t3)}
+.login-setup-link a{color:var(--c1);cursor:pointer;text-decoration:underline}
+/* ─── APP SHELL ─── */
+#app{display:none;min-height:100vh}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:var(--nav);background:var(--surf);border-right:1px solid var(--brd);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;transition:transform .22s cubic-bezier(.4,0,.2,1);overflow:hidden}
+.sb-head{padding:18px 16px 14px;border-bottom:1px solid var(--brd)}
+.sb-logo{display:flex;align-items:center;gap:10px}
+.sb-lm{width:34px;height:34px;background:var(--c1l);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.sb-logo h2{font-size:15px;font-weight:700;color:var(--c1);letter-spacing:-.3px}
+.sb-logo span{font-size:10px;color:var(--t3);display:block}
+.sb-user{padding:11px 14px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:10px}
+.av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;letter-spacing:.5px}
+.sb-nav{flex:1;overflow-y:auto;padding:8px}
+.nb-group{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);padding:10px 8px 3px}
+.nb{width:100%;display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r);border:none;background:transparent;color:var(--t2);cursor:pointer;font-size:12px;font-weight:500;font-family:'Sora',sans-serif;text-align:left;transition:all .12s;margin-bottom:2px}
+.nb:hover{background:var(--bg);color:var(--t1)}
+.nb.act{background:var(--c1l);color:var(--c1d);font-weight:600}
+.nb .ic{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+.sb-foot{padding:10px;border-top:1px solid var(--brd)}
+.btn-logout{width:100%;padding:8px;border-radius:var(--r);border:1px solid var(--brd2);background:transparent;cursor:pointer;font-size:11px;font-weight:500;font-family:'Sora',sans-serif;color:var(--t2);transition:all .15s}
+.btn-logout:hover{background:var(--redl);color:var(--red);border-color:var(--redb)}
+.topbar{display:none;height:52px;background:var(--surf);border-bottom:1px solid var(--brd);align-items:center;justify-content:space-between;padding:0 14px;position:sticky;top:0;z-index:150}
+.hbg{background:none;border:none;font-size:24px;cursor:pointer;color:var(--t1);padding:4px}
+.sb-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:190}
+.sb-ov.open{display:block}
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.topbar{display:flex}.main{margin-left:0!important;padding:14px!important}}
+/* ─── MAIN AREA ─── */
+.main{margin-left:var(--nav);padding:22px;flex:1;max-width:100%}
+.pg{display:none}.pg.act{display:block}
+.pg-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.pg-title{font-size:19px;font-weight:700;letter-spacing:-.4px}
+.pg-sub{font-size:12px;color:var(--t2);margin-top:2px}
+/* ─── KPI DASHBOARD ─── */
+.kpi-section{margin-bottom:20px}
+.kpi-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.kpi-section-label::after{content:'';flex:1;height:1px;background:var(--bg2)}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(156px,1fr));gap:10px;margin-bottom:0}
+.kpi{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rl);padding:14px 16px;transition:box-shadow .15s;position:relative;overflow:hidden}
+.kpi:hover{box-shadow:0 3px 12px rgba(0,0,0,.08)}
+.kpi-accent{position:absolute;top:0;left:0;width:3px;height:100%;border-radius:2px 0 0 2px}
+.kpi-icon{font-size:18px;margin-bottom:7px;display:block}
+.kpi-label{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.kpi-val{font-size:22px;font-weight:700;letter-spacing:-.6px;line-height:1;font-family:'DM Mono',monospace}
+.kpi-sub{font-size:10px;color:var(--t3);margin-top:5px}
+/* ─── CARDS ─── */
+.card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rl);padding:16px;margin-bottom:12px}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:6px}
+.card-title{font-size:13px;font-weight:600}
+/* ─── LIST ITEMS ─── */
+.li{border:1px solid var(--brd);border-radius:var(--r);padding:13px 15px;margin-bottom:8px;background:var(--surf);transition:border-color .15s,box-shadow .15s}
+.li:hover{border-color:var(--brd2);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.li.pago{opacity:.5}
+.li-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.li-name{font-size:13px;font-weight:600}
+.li-sub{font-size:11px;color:var(--t2);margin-top:2px;line-height:1.55}
+.li-val{font-size:16px;font-weight:700;color:var(--c1);white-space:nowrap;font-family:'DM Mono',monospace}
+.li-riscado{font-size:10px;color:var(--t3);text-decoration:line-through;font-family:'DM Mono',monospace;margin-top:1px}
+/* ─── BADGES ─── */
+.b{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;letter-spacing:.2px}
+.b-red{background:var(--redl);color:var(--red)}.b-grn{background:var(--grnl);color:var(--grn)}
+.b-yel{background:var(--c1l);color:var(--c1d)}.b-blu{background:var(--blul);color:var(--blu)}
+.b-gy{background:var(--bg2);color:var(--t2)}.b-purp{background:var(--purpl);color:var(--purp)}
+.b-teal{background:var(--teall);color:var(--teal)}.b-rose{background:var(--rosel);color:var(--rose)}
+/* ─── BUTTONS ─── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r);border:1px solid var(--brd2);background:var(--surf);color:var(--t1);cursor:pointer;font-size:12px;font-weight:500;font-family:'Sora',sans-serif;transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--bg)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--c1);color:#fff;border-color:var(--c1)}.btn-primary:hover{background:var(--c1d)}
+.btn-sm{padding:4px 9px;font-size:11px}
+.btn-danger{color:var(--red);border-color:var(--redb)}.btn-danger:hover{background:var(--redl)}
+.btn-success{color:var(--grn);border-color:var(--grnb)}.btn-success:hover{background:var(--grnl)}
+.btn-info{color:var(--blu);border-color:var(--blub)}.btn-info:hover{background:var(--blul)}
+.btn-purp{color:var(--purp);border-color:var(--purpb)}.btn-purp:hover{background:var(--purpl)}
+.btns{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+/* ─── FORMS ─── */
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 11px;border:1.5px solid var(--brd2);border-radius:var(--r);font-size:13px;font-family:'Sora',sans-serif;outline:none;transition:border .15s;background:var(--surf);color:var(--t1)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--c1)}
+.fg textarea{resize:vertical;min-height:68px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.fr{grid-template-columns:1fr}}
+.fhint{font-size:11px;color:var(--t3);margin-top:4px;margin-bottom:12px}
+/* ─── ALERTS ─── */
+.al{padding:10px 14px;border-radius:var(--r);font-size:12px;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px}
+.al-red{background:var(--redl);color:var(--red);border:1px solid var(--redb)}
+.al-yel{background:var(--c1l);color:var(--c1d);border:1px solid var(--c1m)}
+.al-grn{background:var(--grnl);color:var(--grn);border:1px solid var(--grnb)}
+.al-blu{background:var(--blul);color:var(--blu);border:1px solid var(--blub)}
+/* ─── FILTER BAR ─── */
+.fbar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.fb{padding:5px 12px;border-radius:20px;border:1.5px solid var(--brd2);background:transparent;cursor:pointer;font-size:11px;font-weight:500;font-family:'Sora',sans-serif;color:var(--t2);transition:all .12s}
+.fb:hover:not(.act){background:var(--bg)}
+.fb.act{background:var(--c1l);color:var(--c1d);border-color:var(--c1m);font-weight:600}
+/* ─── TABLE ─── */
+.tw{overflow-x:auto;border-radius:var(--r)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:9px 11px;border-bottom:2px solid var(--bg2);font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--t2);font-weight:700;background:var(--bg);white-space:nowrap}
+td{padding:10px 11px;border-bottom:1px solid var(--bg2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(184,112,26,.02)}
+/* ─── MODAL ─── */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;align-items:center;justify-content:center;padding:16px}
+.mo.open{display:flex}
+.mo-box{background:var(--surf);border-radius:var(--rxl);padding:26px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,.18)}
+.mo-box.wide{max-width:600px}
+.mo-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.mo-title{font-size:16px;font-weight:700;letter-spacing:-.3px}
+.mo-x{background:none;border:none;font-size:26px;cursor:pointer;color:var(--t2);line-height:1;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px}
+.mo-x:hover{background:var(--bg);color:var(--t1)}
+/* ─── MISC ─── */
+.sep{height:1px;background:var(--bg2);margin:14px 0}
+.empty{text-align:center;padding:38px 0;color:var(--t3);font-size:13px}
+.mono{font-family:'DM Mono',monospace}
+.log-li{padding:9px 12px 9px 14px;border-radius:var(--r);margin-bottom:5px;font-size:12px;border-left:3px solid;line-height:1.55}
+.log-li.cr{background:var(--grnl);border-color:var(--grn)}.log-li.up{background:var(--blul);border-color:var(--blu)}
+.log-li.dl{background:var(--redl);border-color:var(--red)}.log-li.pm{background:var(--c1l);border-color:var(--c1)}
+.log-li.dv{background:var(--purpl);border-color:var(--purp)}.log-li.au{background:var(--bg2);border-color:var(--t3)}
+.log-meta{font-size:10px;color:var(--t3);margin-top:3px}
+.fdrop{border:2px dashed var(--brd2);border-radius:var(--r);padding:16px;text-align:center;cursor:pointer;font-size:12px;color:var(--t2);transition:all .15s}
+.fdrop:hover{border-color:var(--c1);background:var(--c1l);color:var(--c1d)}
+.fdrop input{display:none}
+.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:32px;color:var(--t2);font-size:13px}
+.spin{width:20px;height:20px;border:2px solid var(--brd2);border-top-color:var(--c1);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ─── PRINT ─── */
+@media print{
+  .sidebar,.topbar,.btns,.btn,.fbar,#setup-wrap,#login-wrap{display:none!important}
+  .main{margin-left:0!important;padding:10px!important}
+  .pg{display:block!important}
+  body{background:#fff}
+  .mo{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════ SETUP SCREEN ══════ -->
+<div id="setup-wrap" style="display:flex">
+  <div class="setup-card">
+    <h2>⚙️ Configuração do Banco de Dados</h2>
+    <p class="sub">Siga os passos abaixo para conectar o ValesApp ao seu banco de dados Supabase gratuito.</p>
+
+    <div class="step"><span class="step-n">1</span><div class="step-body"><strong>Crie uma conta gratuita</strong> em <a href="https://supabase.com" target="_blank" style="color:var(--c1)">supabase.com</a> → clique em "Start your project"</div></div>
+    <div class="step"><span class="step-n">2</span><div class="step-body"><strong>Crie um novo projeto</strong> (pode ser qualquer nome, ex: "valesapp"). Anote a senha do banco.</div></div>
+    <div class="step"><span class="step-n">3</span><div class="step-body">
+      <strong>Abra o SQL Editor</strong> (menu lateral) e execute o script abaixo para criar as tabelas:
+      <div class="sql-block">create table fornecedores (
+  id uuid default gen_random_uuid() primary key,
+  nome text not null,
+  tel text default '',
+  prazo integer default 0,
+  pgto text default 'PIX',
+  obs text default '',
+  created_at timestamptz default now(),
+  created_by text default ''
+);
+create table vales (
+  id uuid default gen_random_uuid() primary key,
+  forn_id uuid references fornecedores(id) on delete set null,
+  data date not null,
+  valor_original numeric not null default 0,
+  pgto text default '',
+  descricao text default '',
+  obs text default '',
+  vencimento date not null,
+  status text default 'aberto',
+  pago_em date,
+  pago_by text,
+  valor_pago numeric,
+  pgto_real text,
+  pgto_obs text,
+  comp_data text,
+  comp_name text,
+  comp_type text,
+  created_at timestamptz default now(),
+  created_by text default ''
+);
+create table devolucoes (
+  id uuid default gen_random_uuid() primary key,
+  vale_id uuid references vales(id) on delete cascade,
+  tipo text not null,
+  data date,
+  valor_abatido numeric default 0,
+  item_original text default '',
+  item_trocado text default '',
+  descricao text default '',
+  created_at timestamptz default now(),
+  created_by text default ''
+);
+create table logs (
+  id uuid default gen_random_uuid() primary key,
+  ts timestamptz default now(),
+  user_id text, user_name text,
+  type text, action text, details text
+);
+alter table fornecedores disable row level security;
+alter table vales disable row level security;
+alter table devolucoes disable row level security;
+alter table logs disable row level security;</div>
+    </div></div>
+    <div class="step"><span class="step-n">4</span><div class="step-body"><strong>Copie as credenciais:</strong> vá em Settings → API → copie a "Project URL" e a "anon public" key.</div></div>
+    <div class="step"><span class="step-n">5</span><div class="step-body"><strong>Cole abaixo e salve:</strong></div></div>
+
+    <div class="sep"></div>
+    <div class="cfg-row">
+      <div class="fg"><label>Project URL (ex: https://xxxx.supabase.co)</label><input type="text" id="cfg-url" placeholder="https://xxxxxxxxxxxx.supabase.co"></div>
+      <div class="fg"><label>anon public key</label><input type="text" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIs..."></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="saveConfig()">Salvar e conectar →</button>
+      <button class="btn" onclick="testConnection()">Testar conexão</button>
+    </div>
+    <div id="cfg-msg" style="margin-top:10px;font-size:12px"></div>
+  </div>
+</div>
+
+<!-- ══════ LOGIN ══════ -->
+<div id="login-wrap" style="display:none">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="lmark">📋</div>
+      <h1>ValesApp</h1>
+      <p>Sistema interno de controle de vales</p>
+    </div>
+    <div class="usel-label">Selecione seu usuário</div>
+    <div class="upills">
+      <button class="upill" onclick="selUser('patricia')">Patrícia</button>
+      <button class="upill" onclick="selUser('daniela')">Daniela</button>
+      <button class="upill" onclick="selUser('jean')">Jean</button>
+    </div>
+    <div class="lf">
+      <div class="fg"><label>Usuário</label><input type="text" id="l-user" readonly placeholder="Selecione acima"></div>
+      <div class="fg"><label>Senha</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    </div>
+    <div class="lerr" id="l-err"></div>
+    <button class="btn-login" onclick="doLogin()">Entrar</button>
+    <div class="login-setup-link"><a onclick="showSetup()">Configurar banco de dados</a></div>
+  </div>
+</div>
+
+<!-- ══════ APP ══════ -->
+<div id="app">
+  <div class="topbar">
+    <button class="hbg" onclick="toggleSB()">☰</button>
+    <span style="font-size:14px;font-weight:700;color:var(--c1)">ValesApp</span>
+    <span id="tb-user" style="font-size:11px;color:var(--t2)"></span>
+  </div>
+  <div class="sb-ov" id="sb-ov" onclick="closeSB()"></div>
+
+  <div class="layout">
+    <div class="sidebar" id="sidebar">
+      <div class="sb-head">
+        <div class="sb-logo"><div class="sb-lm">📋</div><div><h2>ValesApp</h2><span>Sistema Interno</span></div></div>
+      </div>
+      <div class="sb-user"><div class="av" id="sb-av"></div><div><div style="font-size:12px;font-weight:600" id="sb-uname"></div><div style="font-size:10px;color:var(--t3)" id="sb-urole"></div></div></div>
+      <div class="sb-nav" id="sb-nav"></div>
+      <div class="sb-foot"><button class="btn-logout" onclick="doLogout()">↩ Sair</button></div>
+    </div>
+
+    <div class="main" id="main-area">
+
+      <!-- DASHBOARD -->
+      <div class="pg act" id="pg-dashboard">
+        <div class="pg-hdr">
+          <div><div class="pg-title">Dashboard</div><div class="pg-sub" id="dash-date"></div></div>
+          <button class="btn btn-sm" onclick="loadAll().then(renderDash)">↻ Atualizar</button>
+        </div>
+        <div id="dash-body"><div class="loading"><div class="spin"></div>Carregando...</div></div>
+      </div>
+
+      <!-- VALES -->
+      <div class="pg" id="pg-vales">
+        <div class="pg-hdr">
+          <div><div class="pg-title">Vales a Pagar</div></div>
+          <div class="btns" id="vales-acts"></div>
+        </div>
+        <div class="fbar" id="vales-fbar"></div>
+        <div id="vales-custom" style="display:none;margin-bottom:14px">
+          <div class="card" style="padding:14px">
+            <div class="fr">
+              <div class="fg" style="margin-bottom:0"><label>De (vencimento)</label><input type="date" id="vf-d1"></div>
+              <div class="fg" style="margin-bottom:0"><label>Até (vencimento)</label><input type="date" id="vf-d2"></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+              <select id="vf-forn-sel" style="flex:1;min-width:160px;padding:8px 10px;border:1.5px solid var(--brd2);border-radius:var(--r);font-size:12px;font-family:'Sora',sans-serif;background:var(--surf);color:var(--t1)"></select>
+              <button class="btn btn-primary btn-sm" onclick="renderVales()">Filtrar</button>
+            </div>
+          </div>
+        </div>
+        <div id="vales-summary"></div>
+        <div id="vales-list"></div>
+      </div>
+
+      <!-- DEVOLUÇÕES -->
+      <div class="pg" id="pg-devolucoes">
+        <div class="pg-hdr">
+          <div><div class="pg-title">Devoluções</div><div class="pg-sub">Abatimentos por defeito e trocas por numeração</div></div>
+          <button class="btn btn-primary" onclick="openDevModal(null)" id="btn-new-dev">+ Nova devolução</button>
+        </div>
+        <div id="devs-list"></div>
+      </div>
+
+      <!-- FINANCEIRO -->
+      <div class="pg" id="pg-financeiro">
+        <div class="pg-hdr"><div><div class="pg-title">Financeiro</div><div class="pg-sub">Histórico de pagamentos realizados</div></div></div>
+        <div class="kpi-grid" id="fin-metrics" style="margin-bottom:16px"></div>
+        <div class="fbar" id="fin-fbar"></div>
+        <div id="fin-content"></div>
+      </div>
+
+      <!-- RELATÓRIOS -->
+      <div class="pg" id="pg-relatorios">
+        <div class="pg-hdr">
+          <div><div class="pg-title">Relatórios e Fechamento</div></div>
+          <div class="btns">
+            <button class="btn btn-sm" onclick="relPrev()">‹ Anterior</button>
+            <button class="btn btn-sm" onclick="relNext()">Próximo ›</button>
+            <button class="btn btn-primary btn-sm" onclick="window.print()">🖨 Imprimir</button>
+          </div>
+        </div>
+        <div class="fbar" id="rel-fbar"></div>
+        <div id="rel-custom" style="display:none;margin-bottom:14px">
+          <div class="card" style="padding:14px">
+            <div class="fr">
+              <div class="fg" style="margin-bottom:0"><label>De</label><input type="date" id="rel-d1"></div>
+              <div class="fg" style="margin-bottom:0"><label>Até</label><input type="date" id="rel-d2"></div>
+            </div>
+            <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="relOffset=0;renderRel()">Gerar</button>
+          </div>
+        </div>
+        <div id="rel-content"></div>
+      </div>
+
+      <!-- FORNECEDORES -->
+      <div class="pg" id="pg-fornecedores">
+        <div class="pg-hdr">
+          <div><div class="pg-title">Fornecedores</div></div>
+          <button class="btn btn-primary" onclick="openFornModal(null)" id="btn-new-forn">+ Novo fornecedor</button>
+        </div>
+        <div id="forn-list"></div>
+      </div>
+
+      <!-- LOGS -->
+      <div class="pg" id="pg-logs">
+        <div class="pg-hdr"><div><div class="pg-title">Log de Atividades</div><div class="pg-sub">Auditoria completa</div></div></div>
+        <div class="fbar" id="log-fbar"></div>
+        <div id="log-list"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODALS ══════ -->
+<!-- Fornecedor -->
+<div class="mo" id="mo-forn">
+  <div class="mo-box">
+    <div class="mo-hdr"><div class="mo-title" id="mo-forn-t">Fornecedor</div><button class="mo-x" onclick="closeMo('mo-forn')">×</button></div>
+    <div class="fr"><div class="fg"><label>Nome *</label><input type="text" id="ff-nome"></div><div class="fg"><label>Contato / Telefone</label><input type="text" id="ff-tel"></div></div>
+    <div class="fr">
+      <div class="fg"><label>Prazo de pagamento (dias)</label><input type="number" id="ff-prazo" min="0"></div>
+      <div class="fg"><label>Forma de pgto padrão</label><select id="ff-pgto"><option>PIX</option><option>Cheque</option><option>Cartão</option><option>Dinheiro</option></select></div>
+    </div>
+    <div class="fg"><label>Observações (banco, dados, etc.)</label><textarea id="ff-obs"></textarea></div>
+    <div class="btns" style="justify-content:flex-end"><button class="btn" onclick="closeMo('mo-forn')">Cancelar</button><button class="btn btn-primary" onclick="saveForn()" id="btn-save-forn">Salvar</button></div>
+  </div>
+</div>
+<!-- Vale -->
+<div class="mo" id="mo-vale">
+  <div class="mo-box wide">
+    <div class="mo-hdr"><div class="mo-title" id="mo-vale-t">Vale</div><button class="mo-x" onclick="closeMo('mo-vale')">×</button></div>
+    <div class="fr"><div class="fg"><label>Fornecedor *</label><select id="vv-forn" onchange="updVencHint()"></select></div><div class="fg"><label>Data da retirada *</label><input type="date" id="vv-data" onchange="updVencHint()"></div></div>
+    <div class="fr">
+      <div class="fg"><label>Valor total (R$) *</label><input type="number" id="vv-valor" step="0.01" min="0"></div>
+      <div class="fg"><label>Forma de pgto (sobrescreve padrão)</label><select id="vv-pgto"><option value="">— Usar padrão do fornecedor —</option><option>PIX</option><option>Cheque</option><option>Cartão</option><option>Dinheiro</option></select></div>
+    </div>
+    <div class="fg"><label>Produtos / Descrição *</label><textarea id="vv-desc"></textarea></div>
+    <div class="fg"><label>Observações internas</label><textarea id="vv-obs"></textarea></div>
+    <div id="vv-hint" class="fhint"></div>
+    <div class="btns" style="justify-content:flex-end"><button class="btn" onclick="closeMo('mo-vale')">Cancelar</button><button class="btn btn-primary" onclick="saveVale()" id="btn-save-vale">Salvar vale</button></div>
+  </div>
+</div>
+<!-- Devolução -->
+<div class="mo" id="mo-dev">
+  <div class="mo-box">
+    <div class="mo-hdr"><div class="mo-title">Registrar Devolução</div><button class="mo-x" onclick="closeMo('mo-dev')">×</button></div>
+    <div class="fg"><label>Vale relacionado *</label><select id="dv-vale" onchange="updDevInfo()"></select></div>
+    <div id="dv-info" style="margin-bottom:13px"></div>
+    <div class="fg"><label>Tipo de devolução *</label><select id="dv-tipo" onchange="toggleDevTipo()"><option value="abatimento">Abatimento por defeito (desconta do vale)</option><option value="troca">Troca por numeração (sem desconto, só registro)</option></select></div>
+    <div class="fhint" id="dv-tipo-hint">O valor do vale será reduzido.</div>
+    <div class="fg"><label>Data</label><input type="date" id="dv-data"></div>
+    <div id="dv-abat-f"><div class="fg"><label>Valor a abater (R$) *</label><input type="number" id="dv-valor" step="0.01" min="0"></div></div>
+    <div id="dv-troca-f" style="display:none"><div class="fr"><div class="fg"><label>Item devolvido</label><input type="text" id="dv-orig"></div><div class="fg"><label>Item recebido (trocado)</label><input type="text" id="dv-novo"></div></div></div>
+    <div class="fg"><label>Descrição / Motivo</label><textarea id="dv-desc"></textarea></div>
+    <div class="btns" style="justify-content:flex-end"><button class="btn" onclick="closeMo('mo-dev')">Cancelar</button><button class="btn btn-primary" onclick="saveDev()" id="btn-save-dev">Registrar</button></div>
+  </div>
+</div>
+<!-- Pagamento -->
+<div class="mo" id="mo-pgto">
+  <div class="mo-box">
+    <div class="mo-hdr"><div class="mo-title">Registrar Pagamento</div><button class="mo-x" onclick="closeMo('mo-pgto')">×</button></div>
+    <div id="pgto-info" style="margin-bottom:16px"></div>
+    <div class="fr">
+      <div class="fg"><label>Data do pagamento *</label><input type="date" id="pg-data"></div>
+      <div class="fg"><label>Valor pago (R$) *</label><input type="number" id="pg-valor" step="0.01" min="0"></div>
+    </div>
+    <div class="fg"><label>Forma de pagamento *</label><select id="pg-forma"><option>PIX</option><option>Cheque</option><option>Cartão</option><option>Dinheiro</option></select></div>
+    <div class="fg">
+      <label>Comprovante (imagem/PDF até 4MB)</label>
+      <div class="fdrop" onclick="document.getElementById('pg-file').click()">
+        <input type="file" id="pg-file" accept="image/*,application/pdf" onchange="handleFile(event)">
+        <div id="pg-file-lbl">📎 Clique para anexar comprovante</div>
+      </div>
+    </div>
+    <div class="fg"><label>Observações</label><textarea id="pg-obs"></textarea></div>
+    <div class="btns" style="justify-content:flex-end"><button class="btn" onclick="closeMo('mo-pgto')">Cancelar</button><button class="btn btn-success" onclick="savePgto()" id="btn-save-pgto">✓ Confirmar pagamento</button></div>
+  </div>
+</div>
+<!-- Comprovante viewer -->
+<div class="mo" id="mo-comp"><div class="mo-box wide">
+  <div class="mo-hdr"><div class="mo-title">Comprovante</div><button class="mo-x" onclick="closeMo('mo-comp')">×</button></div>
+  <div id="comp-body"></div>
+</div></div>
+
+<script>
+// ════════════════════════════════════════════════
+// CONFIG & SUPABASE
+// ════════════════════════════════════════════════
+let CFG = {url:'',key:''};
+try{const c=localStorage.getItem('valesapp_cfg');if(c){CFG=JSON.parse(c)}}catch(e){}
+
+const API = {
+  async get(table, qs=''){
+    const r=await fetch(`${CFG.url}/rest/v1/${table}?${qs}&order=created_at.desc`,{headers:hdr()});
+    if(!r.ok)throw new Error(await r.text());
+    return r.json();
+  },
+  async ins(table,data){
+    const r=await fetch(`${CFG.url}/rest/v1/${table}`,{method:'POST',headers:{...hdr(),'Prefer':'return=representation'},body:JSON.stringify(data)});
+    if(!r.ok)throw new Error(await r.text());
+    const d=await r.json();return Array.isArray(d)?d[0]:d;
+  },
+  async upd(table,id,data){
+    const r=await fetch(`${CFG.url}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{...hdr(),'Prefer':'return=representation'},body:JSON.stringify(data)});
+    if(!r.ok)throw new Error(await r.text());
+    const d=await r.json();return Array.isArray(d)?d[0]:d;
+  },
+  async del(table,id){
+    const r=await fetch(`${CFG.url}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:hdr()});
+    if(!r.ok)throw new Error(await r.text());
+  }
+};
+function hdr(){return{'apikey':CFG.key,'Authorization':'Bearer '+CFG.key,'Content-Type':'application/json'}}
+
+function saveConfig(){
+  CFG.url=document.getElementById('cfg-url').value.trim().replace(/\/$/,'');
+  CFG.key=document.getElementById('cfg-key').value.trim();
+  if(!CFG.url||!CFG.key){setCfgMsg('Preencha os dois campos.','red');return}
+  localStorage.setItem('valesapp_cfg',JSON.stringify(CFG));
+  testConnection(true);
+}
+async function testConnection(redirect=false){
+  const msg=document.getElementById('cfg-msg');
+  setCfgMsg('Testando conexão...','gray');
+  try{
+    await API.get('fornecedores','select=id&limit=1');
+    setCfgMsg('✅ Conexão bem-sucedida! Redirecionando...','green');
+    if(redirect)setTimeout(()=>{showLogin()},1200);
+  }catch(e){
+    setCfgMsg('❌ Erro: '+e.message+' — Verifique a URL, a key e se o SQL foi executado.','red');
+  }
+}
+function setCfgMsg(t,c){const m=document.getElementById('cfg-msg');m.textContent=t;m.style.color=c==='red'?'var(--red)':c==='green'?'var(--grn)':'var(--t2)'}
+function showSetup(){document.getElementById('login-wrap').style.display='none';document.getElementById('setup-wrap').style.display='flex'}
+function showLogin(){document.getElementById('setup-wrap').style.display='none';document.getElementById('login-wrap').style.display='flex'}
+
+// ════════════════════════════════════════════════
+// USERS & AUTH
+// ════════════════════════════════════════════════
+const USERS={
+  patricia:{name:'Patrícia',pass:'pat123',role:'pedidos',roleLabel:'Pedidos',color:'#B8701A',bg:'#FBF0E0'},
+  daniela: {name:'Daniela', pass:'dan123',role:'financeiro',roleLabel:'Financeiro',color:'#164F8C',bg:'#EBF3FD'},
+  jean:    {name:'Jean',    pass:'jean123',role:'admin',roleLabel:'Administrador',color:'#0B5C4A',bg:'#E0F7F3'}
+};
+const NAVS={
+  pedidos:    [{id:'dashboard',ic:'📊',l:'Dashboard'},{id:'vales',ic:'🧾',l:'Vales'},{id:'devolucoes',ic:'↩',l:'Devoluções'},{id:'fornecedores',ic:'🏭',l:'Fornecedores'}],
+  financeiro: [{id:'dashboard',ic:'📊',l:'Dashboard'},{id:'vales',ic:'🧾',l:'Vales'},{id:'financeiro',ic:'💰',l:'Financeiro'},{id:'relatorios',ic:'📋',l:'Relatórios'}],
+  admin:      [{id:'dashboard',ic:'📊',l:'Dashboard'},{id:'vales',ic:'🧾',l:'Vales'},{id:'devolucoes',ic:'↩',l:'Devoluções'},{id:'financeiro',ic:'💰',l:'Financeiro'},{id:'relatorios',ic:'📋',l:'Relatórios'},{id:'fornecedores',ic:'🏭',l:'Fornecedores'},{id:'logs',ic:'📝',l:'Log'}]
+};
+let CU=null,selUID=null;
+
+function selUser(id){
+  selUID=id;
+  document.querySelectorAll('.upill').forEach((p,i)=>{p.classList.toggle('sel',['patricia','daniela','jean'][i]===id)});
+  document.getElementById('l-user').value=USERS[id].name;
+  document.getElementById('l-pass').focus();
+  document.getElementById('l-err').textContent='';
+}
+async function doLogin(){
+  if(!selUID){document.getElementById('l-err').textContent='Selecione um usuário.';return}
+  if(USERS[selUID].pass!==document.getElementById('l-pass').value){document.getElementById('l-err').textContent='Senha incorreta.';return}
+  CU={id:selUID,...USERS[selUID]};
+  document.getElementById('l-pass').value='';
+  document.getElementById('login-wrap').style.display='none';
+  document.getElementById('app').style.display='block';
+  const u=USERS[CU.id];
+  const av=document.getElementById('sb-av');av.textContent=u.name.slice(0,2).toUpperCase();av.style.background=u.bg;av.style.color=u.color;
+  document.getElementById('sb-uname').textContent=u.name;
+  document.getElementById('sb-urole').textContent=u.roleLabel;
+  document.getElementById('tb-user').textContent=u.name;
+  document.getElementById('dash-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('sb-nav').innerHTML=NAVS[u.role].map(n=>`<button class="nb" id="nb-${n.id}" onclick="goTo('${n.id}')"><span class="ic">${n.ic}</span>${n.l}</button>`).join('');
+  addLog('au','Login',u.name+' entrou no sistema');
+  await loadAll();
+  goTo('dashboard');
+}
+function doLogout(){addLog('au','Logout',USERS[CU.id].name+' saiu');CU=null;selUID=null;document.getElementById('app').style.display='none';document.getElementById('login-wrap').style.display='flex';document.querySelectorAll('.upill').forEach(p=>p.classList.remove('sel'));document.getElementById('l-user').value=''}
+
+function goTo(p){
+  document.querySelectorAll('.pg').forEach(x=>x.classList.remove('act'));
+  document.querySelectorAll('.nb').forEach(x=>x.classList.remove('act'));
+  document.getElementById('pg-'+p)?.classList.add('act');
+  document.getElementById('nb-'+p)?.classList.add('act');
+  closeSB();
+  const map={dashboard:renderDash,vales:renderVales,devolucoes:renderDevs,financeiro:renderFin,relatorios:renderRel,fornecedores:renderForn,logs:renderLogs};
+  map[p]?.();
+}
+function toggleSB(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sb-ov').classList.toggle('open')}
+function closeSB(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sb-ov').classList.remove('open')}
+function can(p){if(CU?.role==='admin')return true;const m={create_vale:['pedidos'],edit_vale:['pedidos'],create_dev:['pedidos'],create_forn:['pedidos'],edit_forn:['pedidos'],mark_payment:['financeiro'],view_fin:['financeiro']};return(m[p]||[]).includes(CU?.role)}
+
+// ════════════════════════════════════════════════
+// DATA CACHE
+// ════════════════════════════════════════════════
+let DB={fornecedores:[],vales:[],devolucoes:[]};
+async function loadAll(){
+  try{
+    const[f,v,d]=await Promise.all([API.get('fornecedores'),API.get('vales'),API.get('devolucoes')]);
+    DB.fornecedores=f||[];DB.vales=v||[];DB.devolucoes=d||[];
+  }catch(e){console.error('Load error',e)}
+}
+
+// ════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const today=()=>new Date().toISOString().slice(0,10);
+const nowISO=()=>new Date().toISOString();
+const fmtD=s=>{if(!s)return'—';const[y,m,d]=(s+'').slice(0,10).split('-');return`${d}/${m}/${y}`};
+const fmtR=n=>'R$ '+parseFloat(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const addDays=(s,n)=>{const d=new Date(s+'T12:00:00');d.setDate(d.getDate()+parseInt(n||0));return d.toISOString().slice(0,10)};
+const diffDays=s=>{const t=new Date();t.setHours(0,0,0,0);const d=new Date(s+'T12:00:00');return Math.floor((d-t)/86400000)};
+const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const openMo=id=>document.getElementById(id).classList.add('open');
+const closeMo=id=>document.getElementById(id).classList.remove('open');
+const setLoading=(btnId,on)=>{const b=document.getElementById(btnId);if(b){b.disabled=on;b.textContent=on?'Salvando...':b.getAttribute('data-orig')||b.textContent}};
+
+function valeLiq(v){
+  const a=DB.devolucoes.filter(d=>d.vale_id===v.id&&d.tipo==='abatimento');
+  return Math.max(0,parseFloat(v.valor_original||0)-a.reduce((s,d)=>s+parseFloat(d.valor_abatido||0),0));
+}
+function stBadge(v){
+  if(v.status==='pago')return{l:'Pago',c:'b-grn'};
+  const d=diffDays(v.vencimento);
+  if(d<0)return{l:`Atrasado ${Math.abs(d)}d`,c:'b-red'};
+  if(d===0)return{l:'Vence hoje',c:'b-red'};
+  if(d<=3)return{l:`Vence em ${d}d`,c:'b-yel'};
+  return{l:`${d}d`,c:'b-gy'};
+}
+function pgtoTag(p){const m={PIX:'b-blu',Cheque:'b-purp',Cartão:'b-yel',Dinheiro:'b-teal'};return p?`<span class="b ${m[p]||'b-gy'}">${p}</span>`:''}
+
+async function addLog(type,action,details=''){
+  if(!CU)return;
+  try{await API.ins('logs',{user_id:CU.id,user_name:USERS[CU.id]?.name||CU.id,type,action,details})}catch(e){}
+}
+
+function fornOpts(sel=''){
+  return DB.fornecedores.map(f=>`<option value="${f.id}" ${f.id===sel?'selected':''}>${esc(f.nome)}</option>`).join('');
+}
+
+// ════════════════════════════════════════════════
+// DASHBOARD KPIs
+// ════════════════════════════════════════════════
+function renderDash(){
+  // Week bounds
+  const now=new Date();now.setHours(0,0,0,0);
+  const dow=now.getDay()||7;
+  const wStart=new Date(now);wStart.setDate(now.getDate()-dow+1);
+  const wEnd=new Date(wStart);wEnd.setDate(wStart.getDate()+6);
+  const ws=wStart.toISOString().slice(0,10),we=wEnd.toISOString().slice(0,10);
+  const ms=today().slice(0,7);
+
+  const abertos=DB.vales.filter(v=>v.status!=='pago');
+  const pagos=DB.vales.filter(v=>v.status==='pago');
+  const atrasados=abertos.filter(v=>diffDays(v.vencimento)<0);
+
+  // ── THIS WEEK KPIs ──
+  const pedidosSem=DB.vales.filter(v=>(v.created_at||'').slice(0,10)>=ws&&(v.created_at||'').slice(0,10)<=we);
+  const pagosSem=pagos.filter(v=>(v.pago_em||'')>=ws&&(v.pago_em||'')<=we);
+  const aPagarSem=abertos.filter(v=>v.vencimento>=ws&&v.vencimento<=we);
+  const devsSem=DB.devolucoes.filter(d=>(d.created_at||'').slice(0,10)>=ws&&(d.created_at||'').slice(0,10)<=we);
+
+  const tPedSem=pedidosSem.reduce((a,v)=>a+parseFloat(v.valor_original||0),0);
+  const tPagoSem=pagosSem.reduce((a,v)=>a+parseFloat(v.valor_pago||0),0);
+  const tAPagarSem=aPagarSem.reduce((a,v)=>a+valeLiq(v),0);
+
+  // ── OVERALL KPIs ──
+  const tAberto=abertos.reduce((a,v)=>a+valeLiq(v),0);
+  const tAbertoBruto=abertos.reduce((a,v)=>a+parseFloat(v.valor_original||0),0);
+  const allVals=DB.vales.length>0?DB.vales.reduce((a,v)=>a+parseFloat(v.valor_original||0),0)/DB.vales.length:0;
+  const tAbat=DB.devolucoes.filter(d=>d.tipo==='abatimento').reduce((a,d)=>a+parseFloat(d.valor_abatido||0),0);
+  const tPagoMes=pagos.filter(v=>(v.pago_em||'').startsWith(ms)).reduce((a,v)=>a+parseFloat(v.valor_pago||0),0);
+
+  // Maior fornecedor em aberto
+  const byForn={};
+  abertos.forEach(v=>{if(!byForn[v.forn_id])byForn[v.forn_id]=0;byForn[v.forn_id]+=valeLiq(v)});
+  let mfId='',mfVal=0;Object.keys(byForn).forEach(k=>{if(byForn[k]>mfVal){mfVal=byForn[k];mfId=k}});
+  const mfNome=DB.fornecedores.find(f=>f.id===mfId)?.nome||'—';
+
+  // Pontualidade (% pagos no prazo ou antes)
+  const noPrazo=pagos.filter(v=>(v.pago_em||'')<=v.vencimento).length;
+  const pont=pagos.length>0?Math.round(noPrazo/pagos.length*100):100;
+
+  // Próximo vencimento
+  const proxV=abertos.sort((a,b)=>a.vencimento.localeCompare(b.vencimento))[0];
+  const proxDiff=proxV?diffDays(proxV.vencimento):null;
+
+  // Média de atraso
+  const medAtraso=atrasados.length?Math.round(atrasados.reduce((a,v)=>a+Math.abs(diffDays(v.vencimento)),0)/atrasados.length):0;
+
+  const kpi=(icon,label,val,sub,accent,valColor='var(--t1)')=>`
+    <div class="kpi">
+      <div class="kpi-accent" style="background:${accent}"></div>
+      <span class="kpi-icon">${icon}</span>
+      <div class="kpi-label">${label}</div>
+      <div class="kpi-val" style="color:${valColor}">${val}</div>
+      ${sub?`<div class="kpi-sub">${sub}</div>`:''}
+    </div>`;
+
+  let html=`
+  <div class="kpi-section">
+    <div class="kpi-section-label">Esta semana (${fmtD(ws)} – ${fmtD(we)})</div>
+    <div class="kpi-grid">
+      ${kpi('📦','Pedidos esta semana',pedidosSem.length+' vale'+(pedidosSem.length!==1?'s':''),fmtR(tPedSem),'var(--c1)','var(--c1)')}
+      ${kpi('✅','Pagos esta semana',pagosSem.length+' vale'+(pagosSem.length!==1?'s':''),fmtR(tPagoSem),'var(--grn)','var(--grn)')}
+      ${kpi('💸','A pagar esta semana',fmtR(tAPagarSem),aPagarSem.length+' vale'+(aPagarSem.length!==1?'s':''),'var(--red)','var(--red)')}
+      ${kpi('↩','Devoluções esta semana',devsSem.length+' registro'+(devsSem.length!==1?'s':''),devsSem.filter(d=>d.tipo==='abatimento').length+' abat. + '+devsSem.filter(d=>d.tipo==='troca').length+' trocas','var(--purp)','var(--purp)')}
+    </div>
+  </div>
+  <div class="kpi-section">
+    <div class="kpi-section-label">Situação geral</div>
+    <div class="kpi-grid">
+      ${kpi('💰','Total em aberto',fmtR(tAberto),abertos.length+' vales pendentes','var(--c1)','var(--c1)')}
+      ${kpi('⚠️','Atrasados',atrasados.length+' vale'+(atrasados.length!==1?'s':''),fmtR(atrasados.reduce((a,v)=>a+valeLiq(v),0)),atrasados.length?'var(--red)':'var(--grn)',atrasados.length?'var(--red)':'inherit')}
+      ${kpi('🏆','Maior devedor',esc(mfNome.length>14?mfNome.slice(0,13)+'…':mfNome),fmtR(mfVal),'var(--rose)','var(--rose)')}
+      ${kpi('📊','Ticket médio',fmtR(allVals),DB.vales.length+' vales no total','var(--blu)','var(--blu)')}
+    </div>
+  </div>
+  <div class="kpi-section">
+    <div class="kpi-section-label">Performance e economias</div>
+    <div class="kpi-grid">
+      ${kpi('📈','Pontualidade de pgto',pont+'%',noPrazo+' de '+pagos.length+' pgtos no prazo',pont>=80?'var(--grn)':'var(--red)',pont>=80?'var(--grn)':'var(--red)')}
+      ${kpi('💡','Economizado em devol.',fmtR(tAbat),DB.devolucoes.filter(d=>d.tipo==='abatimento').length+' abatimentos','var(--purp)','var(--purp)')}
+      ${kpi('🗓️','Pago este mês',fmtR(tPagoMes),pagos.filter(v=>(v.pago_em||'').startsWith(ms)).length+' pagamentos','var(--grn)','var(--grn)')}
+      ${proxV?kpi('⏰','Próximo vencimento',fmtD(proxV.vencimento),proxDiff===0?'HOJE!':proxDiff<0?`Atrasado ${Math.abs(proxDiff)}d`:`em ${proxDiff} dia${proxDiff!==1?'s':''}`,proxDiff<=0?'var(--red)':'var(--c1m)',proxDiff<=0?'var(--red)':'var(--c1)'):kpi('⏰','Próximo vencimento','—','Nenhum vale aberto','var(--t3)')}
+    </div>
+  </div>`;
+
+  // Alerts
+  if(atrasados.length)html+=`<div class="al al-red">⚠️ <strong>${atrasados.length} vale(s) em atraso</strong> — total ${fmtR(atrasados.reduce((a,v)=>a+valeLiq(v),0))} — atraso médio ${medAtraso} dia(s)</div>`;
+  const hj=abertos.filter(v=>diffDays(v.vencimento)===0);
+  if(hj.length)html+=`<div class="al al-yel">⏰ <strong>${hj.length} vale(s) vence(m) hoje!</strong> — ${fmtR(hj.reduce((a,v)=>a+valeLiq(v),0))}</div>`;
+
+  // List
+  const top=[...abertos].sort((a,b)=>a.vencimento.localeCompare(b.vencimento)).slice(0,8);
+  html+=`<div class="card"><div class="card-hdr"><div class="card-title">📅 Próximos vencimentos</div></div>`;
+  html+=top.length?top.map(v=>valeItemCompact(v)).join(''):`<div class="empty">Nenhum vale em aberto.</div>`;
+  html+=`</div>`;
+  document.getElementById('dash-body').innerHTML=html;
+}
+
+function valeItemCompact(v){
+  const f=DB.fornecedores.find(x=>x.id===v.forn_id);
+  const st=stBadge(v);const liq=valeLiq(v);
+  const abats=DB.devolucoes.filter(d=>d.vale_id===v.id&&d.tipo==='abatimento');
+  const tAbat=abats.reduce((a,d)=>a+parseFloat(d.valor_abatido||0),0);
+  return`<div class="li">
+    <div class="li-h">
+      <div style="flex:1;min-width:0">
+        <div class="li-name">${esc(f?.nome||'Fornecedor removido')}</div>
+        <div class="li-sub">${esc(v.descricao||'—')} · Vence <strong>${fmtD(v.vencimento)}</strong></div>
+        ${tAbat>0?`<div class="li-sub" style="color:var(--purp)">↩ Abatimento aplicado: −${fmtR(tAbat)}</div>`:''}
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div class="li-val">${fmtR(liq)}</div>
+        ${parseFloat(v.valor_original)!==liq?`<div class="li-riscado">${fmtR(v.valor_original)}</div>`:''}
+        <div style="margin-top:5px;display:flex;gap:3px;justify-content:flex-end;flex-wrap:wrap">
+          <span class="b ${st.c}">${st.l}</span>${pgtoTag(v.pgto||f?.pgto||'')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════
+// FORNECEDORES
+// ════════════════════════════════════════════════
+let editFornId=null;
+function renderForn(){
+  const el=document.getElementById('forn-list');
+  if(!DB.fornecedores.length){el.innerHTML='<div class="empty">Nenhum fornecedor cadastrado.</div>';return}
+  el.innerHTML=DB.fornecedores.map(f=>{
+    const nV=DB.vales.filter(v=>v.forn_id===f.id&&v.status!=='pago').length;
+    const tV=DB.vales.filter(v=>v.forn_id===f.id&&v.status!=='pago').reduce((a,v)=>a+valeLiq(v),0);
+    return`<div class="li">
+      <div class="li-h">
+        <div>
+          <div class="li-name">${esc(f.nome)}</div>
+          ${f.tel?`<div class="li-sub">📞 ${esc(f.tel)}</div>`:''}
+          <div class="li-sub" style="margin-top:5px">Prazo: <strong>${f.prazo}d</strong> · ${pgtoTag(f.pgto)} · <strong>${nV}</strong> aberto(s) = <strong style="color:var(--c1)">${fmtR(tV)}</strong></div>
+          ${f.obs?`<div class="li-sub">📝 ${esc(f.obs)}</div>`:''}
+        </div>
+        <div class="btns">
+          ${can('edit_forn')?`<button class="btn btn-sm" onclick="openFornModal('${f.id}')">Editar</button>`:''}
+          ${CU.role==='admin'?`<button class="btn btn-sm btn-danger" onclick="delForn('${f.id}')">Excluir</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function openFornModal(id){
+  editFornId=id||null;
+  document.getElementById('mo-forn-t').textContent=id?'Editar Fornecedor':'Novo Fornecedor';
+  const f=id?DB.fornecedores.find(x=>x.id===id):null;
+  ['ff-nome','ff-tel','ff-obs'].forEach(i=>document.getElementById(i).value=f?.(i.replace('ff-',''))||'');
+  document.getElementById('ff-prazo').value=f?.prazo||'';
+  document.getElementById('ff-pgto').value=f?.pgto||'PIX';
+  openMo('mo-forn');
+}
+async function saveForn(){
+  const nome=document.getElementById('ff-nome').value.trim();
+  if(!nome){alert('Informe o nome.');return}
+  const obj={nome,tel:document.getElementById('ff-tel').value.trim(),prazo:parseInt(document.getElementById('ff-prazo').value)||0,pgto:document.getElementById('ff-pgto').value,obs:document.getElementById('ff-obs').value.trim(),created_by:CU.id};
+  try{
+    if(editFornId){await API.upd('fornecedores',editFornId,obj);addLog('up','Fornecedor editado',nome)}
+    else{await API.ins('fornecedores',obj);addLog('cr','Fornecedor criado',nome)}
+    await loadAll();closeMo('mo-forn');renderForn();renderDash();
+  }catch(e){alert('Erro: '+e.message)}
+}
+async function delForn(id){
+  if(!confirm('Excluir fornecedor?'))return;
+  try{await API.del('fornecedores',id);addLog('dl','Fornecedor excluído',id);await loadAll();renderForn()}catch(e){alert('Erro: '+e.message)}
+}
+
+// ════════════════════════════════════════════════
+// VALES
+// ════════════════════════════════════════════════
+let editValeId=null,vFilter='abertos';
+function renderVales(){
+  document.getElementById('vales-acts').innerHTML=can('create_vale')?`<button class="btn btn-primary" onclick="openValeModal(null)">+ Novo vale</button>`:'';
+  const fDefs=[{id:'abertos',l:'Em aberto'},{id:'atrasados',l:'Atrasados'},{id:'7d',l:'Últ. 7 dias'},{id:'15d',l:'Últ. 15 dias'},{id:'30d',l:'Últ. 30 dias'},{id:'periodo',l:'Por período'},{id:'pagos',l:'Pagos'},{id:'todos',l:'Todos'}];
+  document.getElementById('vales-fbar').innerHTML=fDefs.map(f=>`<button class="fb ${vFilter===f.id?'act':''}" onclick="vFilter='${f.id}';renderVales()">${f.l}</button>`).join('');
+  const custom=vFilter==='periodo';
+  document.getElementById('vales-custom').style.display=custom?'block':'none';
+  if(custom){document.getElementById('vf-forn-sel').innerHTML='<option value="">Todos os fornecedores</option>'+fornOpts('')}
+  const list=getValeList();
+  renderValesSummary(list);
+  document.getElementById('vales-list').innerHTML=list.length?list.map(v=>renderValeItem(v)).join(''):'<div class="empty">Nenhum vale neste filtro.</div>';
+}
+function getValeList(){
+  const t=today();
+  let l=[...DB.vales];
+  if(vFilter==='abertos')l=l.filter(v=>v.status!=='pago');
+  else if(vFilter==='atrasados')l=l.filter(v=>v.status!=='pago'&&diffDays(v.vencimento)<0);
+  else if(vFilter==='pagos')l=l.filter(v=>v.status==='pago');
+  else if(vFilter==='7d'){const s=addDays(t,-7);l=l.filter(v=>v.vencimento>=s&&v.vencimento<=t)}
+  else if(vFilter==='15d'){const s=addDays(t,-15);l=l.filter(v=>v.vencimento>=s&&v.vencimento<=t)}
+  else if(vFilter==='30d'){const s=addDays(t,-30);l=l.filter(v=>v.vencimento>=s&&v.vencimento<=t)}
+  else if(vFilter==='periodo'){
+    const d1=document.getElementById('vf-d1')?.value,d2=document.getElementById('vf-d2')?.value,fi=document.getElementById('vf-forn-sel')?.value;
+    if(d1&&d2)l=l.filter(v=>v.vencimento>=d1&&v.vencimento<=d2);
+    if(fi)l=l.filter(v=>v.forn_id===fi);
+  }
+  return l.sort((a,b)=>a.vencimento.localeCompare(b.vencimento));
+}
+function renderValesSummary(list){
+  const tBruto=list.reduce((a,v)=>a+parseFloat(v.valor_original||0),0);
+  const tAbat=DB.devolucoes.filter(d=>d.tipo==='abatimento'&&list.some(v=>v.id===d.vale_id)).reduce((a,d)=>a+parseFloat(d.valor_abatido||0),0);
+  const tLiq=list.reduce((a,v)=>a+valeLiq(v),0);
+  const tPago=list.filter(v=>v.status==='pago').reduce((a,v)=>a+parseFloat(v.valor_pago||0),0);
+  const tAberto=list.filter(v=>v.status!=='pago').reduce((a,v)=>a+valeLiq(v),0);
+  document.getElementById('vales-summary').innerHTML=`
+    <div class="kpi-grid" style="margin-bottom:14px">
+      <div class="kpi"><span class="kpi-icon">💵</span><div class="kpi-label">Bruto</div><div class="kpi-val" style="font-size:16px">${fmtR(tBruto)}</div></div>
+      <div class="kpi" style="border-color:var(--purpb)"><span class="kpi-icon">↩</span><div class="kpi-label">Abatimentos</div><div class="kpi-val" style="font-size:16px;color:var(--purp)">−${fmtR(tAbat)}</div></div>
+      <div class="kpi" style="border-color:var(--c1m)"><span class="kpi-icon">💰</span><div class="kpi-label">Líquido</div><div class="kpi-val" style="font-size:16px;color:var(--c1)">${fmtR(tLiq)}</div></div>
+      <div class="kpi" style="border-color:var(--grnb)"><span class="kpi-icon">✅</span><div class="kpi-label">Pago</div><div class="kpi-val" style="font-size:16px;color:var(--grn)">${fmtR(tPago)}</div></div>
+      <div class="kpi" style="border-color:var(--redb)"><span class="kpi-icon">⏳</span><div class="kpi-label">Em aberto</div><div class="kpi-val" style="font-size:16px;color:var(--red)">${fmtR(tAberto)}</div></div>
+      <div class="kpi"><span class="kpi-icon">📋</span><div class="kpi-label">Qtd.</div><div class="kpi-val" style="font-size:16px">${list.length}</div></div>
+    </div>`;
+}
+function renderValeItem(v){
+  const f=DB.fornecedores.find(x=>x.id===v.forn_id);
+  const st=stBadge(v);const liq=valeLiq(v);
+  const abats=DB.devolucoes.filter(d=>d.vale_id===v.id&&d.tipo==='abatimento');
+  const trocas=DB.devolucoes.filter(d=>d.vale_id===v.id&&d.tipo==='troca');
+  const tAbat=abats.reduce((a,d)=>a+parseFloat(d.valor_abatido||0),0);
+  let acts='';
+  if(can('mark_payment')&&v.status!=='pago')acts+=`<button class="btn btn-sm btn-success" onclick="openPgtoModal('${v.id}')">✓ Pagar</button>`;
+  if(v.status==='pago')acts+=`<button class="btn btn-sm btn-info" onclick="verComp('${v.id}')">📎 Comprovante</button>`;
+  if(v.status==='pago'&&CU.role==='admin')acts+=`<button class="btn btn-sm" onclick="desfazerPgto('${v.id}')">Desfazer</button>`;
+  if(can('create_dev')&&v.status!=='pago')acts+=`<button class="btn btn-sm btn-purp" onclick="openDevModal('${v.id}')">↩ Devolução</button>`;
+  if(can('edit_vale'))acts+=`<button class="btn btn-sm" onclick="openValeModal('${v.id}')">Editar</button>`;
+  if(CU.role==='admin')acts+=`<button class="btn btn-sm btn-danger" onclick="delVale('${v.id}')">Excluir</button>`;
+  return`<div class="li ${v.status==='pago'?'pago':''}">
+    <div class="li-h">
+      <div style="flex:1;min-width:0">
+        <div class="li-name">${esc(f?.nome||'Fornecedor removido')}</div>
+        <div class="li-sub">${esc(v.descricao||'—')}</div>
+        <div class="li-sub">📅 Retirada: ${fmtD(v.data)} · Vence: <strong>${fmtD(v.vencimento)}</strong></div>
+        ${tAbat>0?`<div class="li-sub" style="color:var(--purp)">↩ Abatimento: −${fmtR(tAbat)} (${abats.length} item${abats.length>1?'s':''})</div>`:''}
+        ${trocas.length?`<div class="li-sub" style="color:var(--teal)">🔄 ${trocas.length} troca(s) por numeração</div>`:''}
+        ${v.status==='pago'?`<div class="li-sub" style="color:var(--grn)">✓ Pago ${fmtD(v.pago_em)} · ${esc(v.pgto_real||'')} · por ${USERS[v.pago_by]?.name||v.pago_by||'?'}</div>`:''}
+        ${v.obs?`<div class="li-sub">📝 ${esc(v.obs)}</div>`:''}
+      </div>
+      <div style="text-align:right;flex-shrink:0;min-width:100px">
+        <div class="li-val">${fmtR(liq)}</div>
+        ${parseFloat(v.valor_original)!==liq?`<div class="li-riscado">${fmtR(v.valor_original)}</div>`:''}
+        <div style="margin-top:5px;display:flex;gap:3px;justify-content:flex-end;flex-wrap:wrap">
+          <span class="b ${st.c}">${st.l}</span>${pgtoTag(v.pgto||f?.pgto||'')}
+        </div>
+      </div>
+    </div>
+    <div class="sep" style="margin:10px 0 8px"></div>
+    <div class="btns">${acts}</div>
+  </div>`;
+}
+function openValeModal(id){
+  editValeId=id||null;
+  document.getElementById('mo-vale-t').textContent=id?'Editar Vale':'Novo Vale';
+  document.getElementById('vv-forn').innerHTML=DB.fornecedores.length?fornOpts(''):'<option value="">Nenhum fornecedor</option>';
+  const v=id?DB.vales.find(x=>x.id===id):null;
+  document.getElementById('vv-forn').value=v?.forn_id||'';
+  document.getElementById('vv-data').value=v?.data||today();
+  document.getElementById('vv-valor').value=v?.valor_original||'';
+  document.getElementById('vv-pgto').value=v?.pgto||'';
+  document.getElementById('vv-desc').value=v?.descricao||'';
+  document.getElementById('vv-obs').value=v?.obs||'';
+  updVencHint();openMo('mo-vale');
+}
+function updVencHint(){
+  const f=DB.fornecedores.find(x=>x.id===document.getElementById('vv-forn').value);
+  const dt=document.getElementById('vv-data').value;
+  document.getElementById('vv-hint').textContent=f&&dt?`Vencimento: ${fmtD(addDays(dt,f.prazo))} · prazo ${f.prazo}d · padrão: ${f.pgto}`:'';
+}
+async function saveVale(){
+  const fid=document.getElementById('vv-forn').value;
+  const dt=document.getElementById('vv-data').value;
+  const val=parseFloat(document.getElementById('vv-valor').value);
+  if(!fid||!dt||!val){alert('Preencha fornecedor, data e valor.');return}
+  const f=DB.fornecedores.find(x=>x.id===fid);
+  const obj={forn_id:fid,data:dt,valor_original:val,pgto:document.getElementById('vv-pgto').value,descricao:document.getElementById('vv-desc').value,obs:document.getElementById('vv-obs').value,vencimento:addDays(dt,f?.prazo||0),status:'aberto',created_by:CU.id};
+  try{
+    if(editValeId){await API.upd('vales',editValeId,obj);addLog('up','Vale editado',f?.nome+' · '+fmtR(val))}
+    else{await API.ins('vales',obj);addLog('cr','Vale criado',f?.nome+' · '+fmtR(val)+' · vence '+fmtD(obj.vencimento))}
+    await loadAll();closeMo('mo-vale');renderVales();renderDash();
+  }catch(e){alert('Erro: '+e.message)}
+}
+async function delVale(id){
+  if(!confirm('Excluir este vale?'))return;
+  try{await API.del('vales',id);addLog('dl','Vale excluído',id);await loadAll();renderVales();renderDash()}catch(e){alert('Erro: '+e.message)}
+}
+
+// ════════════════════════════════════════════════
+// DEVOLUÇÕES
+// ════════════════════════════════════════════════
+function openDevModal(valeId){
+  const abertos=DB.vales.filter(v=>v.status!=='pago');
+  if(!abertos.length){alert('Sem vales em aberto.');return}
+  document.getElementById('dv-vale').innerHTML=abertos.map(v=>{const f=DB.fornecedores.find(x=>x.id===v.forn_id);return`<option value="${v.id}" ${v.id===valeId?'selected':''}>${esc(f?.nome||'?')} · ${fmtR(valeLiq(v))} · ${fmtD(v.vencimento)}</option>`}).join('');
+  document.getElementById('dv-tipo').value='abatimento';
+  document.getElementById('dv-data').value=today();
+  ['dv-valor','dv-orig','dv-novo','dv-desc'].forEach(i=>document.getElementById(i).value='');
+  toggleDevTipo();updDevInfo();openMo('mo-dev');
+}
+function updDevInfo(){
+  const v=DB.vales.find(x=>x.id===document.getElementById('dv-vale').value);
+  if(!v){document.getElementById('dv-info').innerHTML='';return}
+  const f=DB.fornecedores.find(x=>x.id===v.forn_id);
+  const a=DB.devolucoes.filter(d=>d.vale_id===v.id&&d.tipo==='abatimento').reduce((s,d)=>s+parseFloat(d.valor_abatido||0),0);
+  document.getElementById('dv-info').innerHTML=`<div class="card" style="padding:11px;background:var(--bg2)"><div style="font-size:12px;font-weight:600">${esc(f?.nome||'?')} · Vence ${fmtD(v.vencimento)}</div><div style="font-size:11px;color:var(--t2);margin-top:2px">Original: ${fmtR(v.valor_original)} ${a?'· Abatido: −'+fmtR(a):''}</div><div style="font-size:15px;font-weight:700;color:var(--c1);margin-top:4px">Valor atual: ${fmtR(valeLiq(v))}</div></div>`;
+}
+function toggleDevTipo(){
+  const t=document.getElementById('dv-tipo').value;
+  document.getElementById('dv-abat-f').style.display=t==='abatimento'?'block':'none';
+  document.getElementById('dv-troca-f').style.display=t==='troca'?'block':'none';
+  document.getElementById('dv-tipo-hint').textContent=t==='abatimento'?'O valor do vale será reduzido pelo valor do defeito.':'Apenas registro da troca. Sem impacto financeiro.';
+}
+async function saveDev(){
+  const vId=document.getElementById('dv-vale').value;
+  if(!vId){alert('Selecione o vale.');return}
+  const tipo=document.getElementById('dv-tipo').value;
+  const obj={vale_id:vId,tipo,data:document.getElementById('dv-data').value,descricao:document.getElementById('dv-desc').value,created_by:CU.id};
+  if(tipo==='abatimento'){const val=parseFloat(document.getElementById('dv-valor').value);if(!val){alert('Informe o valor.');return}obj.valor_abatido=val;addLog('dv','Abatimento',`−${fmtR(val)}`)}
+  else{obj.item_original=document.getElementById('dv-orig').value;obj.item_trocado=document.getElementById('dv-novo').value;addLog('dv','Troca numeração',`${obj.item_original}→${obj.item_trocado}`)}
+  try{await API.ins('devolucoes',obj);await loadAll();closeMo('mo-dev');renderDevs();renderVales();renderDash()}catch(e){alert('Erro: '+e.message)}
+}
+function renderDevs(){
+  const el=document.getElementById('devs-list');
+  if(!DB.devolucoes.length){el.innerHTML='<div class="empty">Nenhuma devolução registrada.</div>';return}
+  el.innerHTML=[...DB.devolucoes].sort((a,b)=>b.created_at.localeCompare(a.created_at)).map(d=>{
+    const v=DB.vales.find(x=>x.id===d.vale_id);const f=DB.fornecedores.find(x=>x.id===v?.forn_id);
+    const isA=d.tipo==='abatimento';
+    return`<div class="li"><div class="li-h">
+      <div style="flex:1;min-width:0">
+        <div class="li-name">${esc(f?.nome||'Vale removido')} <span class="b ${isA?'b-purp':'b-teal'}" style="margin-left:6px">${isA?'↩ Abatimento':'🔄 Troca'}</span></div>
+        ${isA?`<div class="li-sub">Abatido: <strong style="color:var(--purp)">${fmtR(d.valor_abatido)}</strong></div>`:`<div class="li-sub">De: <strong>${esc(d.item_original||'—')}</strong> → Para: <strong>${esc(d.item_trocado||'—')}</strong></div>`}
+        ${d.descricao?`<div class="li-sub">📝 ${esc(d.descricao)}</div>`:''}
+        <div class="li-sub">📅 ${fmtD(d.data)} · por ${USERS[d.created_by]?.name||d.created_by}</div>
+      </div>
+      ${CU.role==='admin'?`<button class="btn btn-sm btn-danger" onclick="delDev('${d.id}')">Excluir</button>`:''}
+    </div></div>`;
+  }).join('');
+}
+async function delDev(id){if(!confirm('Excluir devolução?'))return;try{await API.del('devolucoes',id);addLog('dl','Devolução excluída',id);await loadAll();renderDevs();renderVales();renderDash()}catch(e){alert('Erro: '+e.message)}}
+
+// ════════════════════════════════════════════════
+// PAGAMENTOS
+// ════════════════════════════════════════════════
+let pgtoValeId=null,fileData=null;
+function openPgtoModal(vId){
+  pgtoValeId=vId;
+  const v=DB.vales.find(x=>x.id===vId);const f=DB.fornecedores.find(x=>x.id===v?.forn_id);
+  const liq=valeLiq(v);
+  document.getElementById('pgto-info').innerHTML=`<div class="card" style="padding:12px;background:var(--bg2)"><div style="font-weight:600;font-size:13px">${esc(f?.nome||'?')}</div><div style="font-size:11px;color:var(--t2)">${esc(v?.descricao||'')} · Vence ${fmtD(v?.vencimento)}</div><div style="font-size:20px;font-weight:700;color:var(--c1);margin-top:6px;font-family:'DM Mono',monospace">${fmtR(liq)}</div>${parseFloat(v?.valor_original)!==liq?`<div style="font-size:11px;color:var(--t3)">Original ${fmtR(v?.valor_original)} (abatimento aplicado)</div>`:''}</div>`;
+  document.getElementById('pg-data').value=today();
+  document.getElementById('pg-valor').value=liq.toFixed(2);
+  document.getElementById('pg-forma').value=v?.pgto||f?.pgto||'PIX';
+  document.getElementById('pg-obs').value='';
+  document.getElementById('pg-file-lbl').innerHTML='📎 Clique para anexar comprovante';
+  document.getElementById('pg-file').value='';fileData=null;
+  openMo('mo-pgto');
+}
+function handleFile(e){
+  const file=e.target.files[0];if(!file)return;
+  if(file.size>4*1024*1024){alert('Arquivo muito grande. Máximo 4MB.');return}
+  const r=new FileReader();
+  r.onload=ev=>{fileData={data:ev.target.result,name:file.name,type:file.type};document.getElementById('pg-file-lbl').innerHTML=file.type.startsWith('image/')?`<img src="${ev.target.result}" style="max-width:100%;max-height:90px;border-radius:6px;object-fit:contain"><br><span style="font-size:11px">${file.name}</span>`:`<div>📄 ${file.name}</div>`};
+  r.readAsDataURL(file);
+}
+async function savePgto(){
+  const v=DB.vales.find(x=>x.id===pgtoValeId);if(!v)return;
+  const val=parseFloat(document.getElementById('pg-valor').value);if(!val){alert('Informe o valor pago.');return}
+  const upd={status:'pago',pago_em:document.getElementById('pg-data').value,pago_by:CU.id,valor_pago:val,pgto_real:document.getElementById('pg-forma').value,pgto_obs:document.getElementById('pg-obs').value};
+  if(fileData){upd.comp_data=fileData.data;upd.comp_name=fileData.name;upd.comp_type=fileData.type}
+  const f=DB.fornecedores.find(x=>x.id===v.forn_id);
+  try{await API.upd('vales',pgtoValeId,upd);addLog('pm','Pagamento',`${f?.nome||''} · ${fmtR(val)} · ${upd.pgto_real} · ${CU.name}`);await loadAll();closeMo('mo-pgto');fileData=null;renderVales();renderDash();if(can('view_fin'))renderFin()}catch(e){alert('Erro: '+e.message)}
+}
+async function desfazerPgto(id){
+  if(!confirm('Desfazer pagamento?'))return;
+  try{await API.upd('vales',id,{status:'aberto',pago_em:null,pago_by:null,valor_pago:null,pgto_real:null,pgto_obs:null,comp_data:null,comp_name:null,comp_type:null});addLog('up','Pgto desfeito',id);await loadAll();renderVales();renderDash()}catch(e){alert('Erro: '+e.message)}
+}
+function verComp(vId){
+  const v=DB.vales.find(x=>x.id===vId);const f=DB.fornecedores.find(x=>x.id===v?.forn_id);
+  let h=`<div class="card" style="padding:12px;margin-bottom:14px"><div style="font-weight:600">${esc(f?.nome||'?')} · ${fmtR(v?.valor_pago||0)}</div><div style="font-size:12px;color:var(--t2)">Pago em ${fmtD(v?.pago_em)} · ${esc(v?.pgto_real||'')} · por ${USERS[v?.pago_by]?.name||v?.pago_by||'?'}</div>${v?.pgto_obs?`<div style="font-size:12px;color:var(--t2)">📝 ${esc(v.pgto_obs)}</div>`:''}</div>`;
+  if(v?.comp_data){h+=v.comp_type?.startsWith('image/')?`<img src="${v.comp_data}" style="max-width:100%;border-radius:var(--r)">`:`<a href="${v.comp_data}" download="${v.comp_name}" class="btn btn-info">📄 Baixar ${esc(v.comp_name)}</a>`}
+  else h+='<div class="empty">Nenhum comprovante.</div>';
+  document.getElementById('comp-body').innerHTML=h;openMo('mo-comp');
+}
+
+// ════════════════════════════════════════════════
+// FINANCEIRO
+// ════════════════════════════════════════════════
+let finFilter='30d';
+function renderFin(){
+  document.getElementById('fin-fbar').innerHTML=[{id:'7d',l:'7 dias'},{id:'15d',l:'15 dias'},{id:'30d',l:'30 dias'},{id:'mes',l:'Este mês'},{id:'todos',l:'Todos'}].map(f=>`<button class="fb ${finFilter===f.id?'act':''}" onclick="finFilter='${f.id}';renderFin()">${f.l}</button>`).join('');
+  let pagos=DB.vales.filter(v=>v.status==='pago');
+  const t=today();
+  if(finFilter==='7d')pagos=pagos.filter(v=>(v.pago_em||'')>=addDays(t,-7));
+  else if(finFilter==='15d')pagos=pagos.filter(v=>(v.pago_em||'')>=addDays(t,-15));
+  else if(finFilter==='30d')pagos=pagos.filter(v=>(v.pago_em||'')>=addDays(t,-30));
+  else if(finFilter==='mes')pagos=pagos.filter(v=>(v.pago_em||'').startsWith(t.slice(0,7)));
+  const tP=pagos.reduce((a,v)=>a+parseFloat(v.valor_pago||0),0);
+  const tAb=DB.vales.filter(v=>v.status!=='pago').reduce((a,v)=>a+valeLiq(v),0);
+  const tAbat=DB.devolucoes.filter(d=>d.tipo==='abatimento').reduce((a,d)=>a+parseFloat(d.valor_abatido||0),0);
+  document.getElementById('fin-metrics').innerHTML=`
+    <div class="kpi"><span class="kpi-icon">✅</span><div class="kpi-label">Pago no período</div><div class="kpi-val" style="color:var(--grn);font-size:18px">${fmtR(tP)}</div><div class="kpi-sub">${pagos.length} pgto(s)</div></div>
+    <div class="kpi"><span class="kpi-icon">⏳</span><div class="kpi-label">Total em aberto</div><div class="kpi-val" style="color:var(--c1);font-size:18px">${fmtR(tAb)}</div></div>
+    <div class="kpi"><span class="kpi-icon">💡</span><div class="kpi-label">Total abatido</div><div class="kpi-val" style="color:var(--purp);font-size:18px">${fmtR(tAbat)}</div></div>
+    <div class="kpi"><span class="kpi-icon">🔄</span><div class="kpi-label">Trocas registradas</div><div class="kpi-val" style="font-size:18px">${DB.devolucoes.filter(d=>d.tipo==='troca').length}</div></div>`;
+  if(!pagos.length){document.getElementById('fin-content').innerHTML='<div class="empty">Nenhum pagamento neste período.</div>';return}
+  document.getElementById('fin-content').innerHTML=`<div class="card" style="padding:0;overflow:hidden"><div class="tw"><table>
+    <tr><th>Data pgto</th><th>Fornecedor</th><th>Descrição</th><th>Valor pago</th><th>Forma</th><th>Por</th><th>Comp.</th></tr>
+    ${[...pagos].sort((a,b)=>(b.pago_em||'').localeCompare(a.pago_em||'')).map(v=>{const f=DB.fornecedores.find(x=>x.id===v.forn_id);return`<tr><td><strong>${fmtD(v.pago_em)}</strong></td><td>${esc(f?.nome||'—')}</td><td style="max-width:160px;font-size:11px;color:var(--t2)">${esc(v.descricao||'—')}</td><td class="mono" style="font-weight:700">${fmtR(v.valor_pago)}</td><td>${pgtoTag(v.pgto_real||'')}</td><td style="font-size:11px">${USERS[v.pago_by]?.name||'—'}</td><td>${v.comp_data?`<button class="btn btn-sm btn-info" onclick="verComp('${v.id}')">Ver</button>`:'—'}</td></tr>`}).join('')}
+  </table></div></div>`;
+}
+
+// ════════════════════════════════════════════════
+// RELATÓRIOS
+// ════════════════════════════════════════════════
+let relFilter='semana',relOffset=0;
+function renderRel(){
+  document.getElementById('rel-fbar').innerHTML=[{id:'semana',l:'Semana'},{id:'quinzena',l:'15 dias'},{id:'mes',l:'Mês'},{id:'personalizado',l:'Personalizado'}].map(f=>`<button class="fb ${relFilter===f.id?'act':''}" onclick="relFilter='${f.id}';relOffset=0;renderRel()">${f.l}</button>`).join('');
+  document.getElementById('rel-custom').style.display=relFilter==='personalizado'?'block':'none';
+  if(relFilter==='personalizado'){const d1=document.getElementById('rel-d1')?.value,d2=document.getElementById('rel-d2')?.value;if(d1&&d2)relContent(d1,d2);else document.getElementById('rel-content').innerHTML='<div class="empty">Defina o período.</div>';return}
+  const{s,e}=relRange();relContent(s,e);
+}
+function relRange(){
+  const t=new Date();t.setHours(0,0,0,0);
+  if(relFilter==='semana'){const dow=t.getDay()||7;const m=new Date(t);m.setDate(t.getDate()-dow+1+relOffset*7);const e=new Date(m);e.setDate(m.getDate()+6);return{s:m.toISOString().slice(0,10),e:e.toISOString().slice(0,10)}}
+  if(relFilter==='quinzena'){const s=new Date(t);s.setDate(t.getDate()+relOffset*15-14);const e=new Date(t);e.setDate(t.getDate()+relOffset*15);return{s:s.toISOString().slice(0,10),e:e.toISOString().slice(0,10)}}
+  const d=new Date(t.getFullYear(),t.getMonth()+relOffset,1);const e=new Date(d.getFullYear(),d.getMonth()+1,0);return{s:d.toISOString().slice(0,10),e:e.toISOString().slice(0,10)};
+}
+function relPrev(){relOffset--;renderRel()}
+function relNext(){relOffset++;renderRel()}
+function relContent(s,e){
+  const all=DB.vales.filter(v=>v.vencimento>=s&&v.vencimento<=e);
+  const pagos=all.filter(v=>v.status==='pago');const abertos=all.filter(v=>v.status!=='pago');
+  const tBruto=all.reduce((a,v)=>a+parseFloat(v.valor_original||0),0);
+  const tAbat=DB.devolucoes.filter(d=>d.tipo==='abatimento'&&all.some(v=>v.id===d.vale_id)).reduce((a,d)=>a+parseFloat(d.valor_abatido||0),0);
+  const tLiq=all.reduce((a,v)=>a+valeLiq(v),0);
+  const tPago=pagos.reduce((a,v)=>a+parseFloat(v.valor_pago||0),0);
+  const byForn={};all.forEach(v=>{if(!byForn[v.forn_id])byForn[v.forn_id]=[];byForn[v.forn_id].push(v)});
+  let h=`<div class="al al-blu">📅 Período: <strong>${fmtD(s)} a ${fmtD(e)}</strong> · ${all.length} vale(s)</div>
+  <div class="kpi-grid" style="margin-bottom:18px">
+    <div class="kpi"><div class="kpi-label">Bruto</div><div class="kpi-val" style="font-size:16px">${fmtR(tBruto)}</div></div>
+    <div class="kpi"><div class="kpi-label">Abatimentos</div><div class="kpi-val" style="font-size:16px;color:var(--purp)">−${fmtR(tAbat)}</div></div>
+    <div class="kpi"><div class="kpi-label">Líquido</div><div class="kpi-val" style="font-size:16px;color:var(--c1)">${fmtR(tLiq)}</div></div>
+    <div class="kpi"><div class="kpi-label">Pago</div><div class="kpi-val" style="font-size:16px;color:var(--grn)">${fmtR(tPago)}</div></div>
+    <div class="kpi"><div class="kpi-label">Em aberto</div><div class="kpi-val" style="font-size:16px;color:var(--red)">${fmtR(Math.max(0,tLiq-tPago))}</div></div>
+    <div class="kpi"><div class="kpi-label">Saldo (pago−liq)</div><div class="kpi-val" style="font-size:16px;color:${tPago>=tLiq?'var(--grn)':'var(--red)'}">${fmtR(tPago-tLiq)}</div></div>
+  </div>`;
+  if(!all.length){h+='<div class="empty">Nenhum vale neste período.</div>';document.getElementById('rel-content').innerHTML=h;return}
+  h+=`<div class="card"><div class="card-title" style="margin-bottom:12px">Por fornecedor</div>`;
+  Object.keys(byForn).forEach(fid=>{
+    const f=DB.fornecedores.find(x=>x.id===fid);const vs=byForn[fid];
+    const tot=vs.reduce((a,v)=>a+valeLiq(v),0);const pago=vs.filter(v=>v.status==='pago').reduce((a,v)=>a+parseFloat(v.valor_pago||0),0);
+    const ab=DB.devolucoes.filter(d=>d.tipo==='abatimento'&&vs.some(v=>v.id===d.vale_id)).reduce((a,d)=>a+parseFloat(d.valor_abatido||0),0);
+    h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid var(--bg2);flex-wrap:wrap;gap:6px"><div><div style="font-weight:600;font-size:13px">${esc(f?.nome||'Removido')}</div><div style="font-size:11px;color:var(--t2)">${vs.length} vale(s) · Pago: ${fmtR(pago)} · Aberto: ${fmtR(Math.max(0,tot-pago))}${ab?` · Abat: −${fmtR(ab)}`:''}</div></div><div style="font-weight:700;color:var(--c1);font-family:'DM Mono',monospace">${fmtR(tot)}</div></div>`;
+  });
+  h+=`</div><div class="card" style="padding:0;overflow:hidden;margin-top:12px"><div class="tw"><table>
+    <tr><th>Fornecedor</th><th>Descrição</th><th>Retirada</th><th>Vencimento</th><th>Original</th><th>Abat.</th><th>Atual</th><th>Status</th></tr>
+    ${all.sort((a,b)=>a.vencimento.localeCompare(b.vencimento)).map(v=>{const f=DB.fornecedores.find(x=>x.id===v.forn_id);const ab=DB.devolucoes.filter(d=>d.vale_id===v.id&&d.tipo==='abatimento').reduce((a,d)=>a+parseFloat(d.valor_abatido||0),0);const st=stBadge(v);return`<tr><td style="font-weight:500">${esc(f?.nome||'—')}</td><td style="font-size:11px;color:var(--t2)">${esc(v.descricao||'—')}</td><td>${fmtD(v.data)}</td><td style="font-weight:500">${fmtD(v.vencimento)}</td><td class="mono">${fmtR(v.valor_original)}</td><td class="mono" style="color:var(--purp)">${ab?'−'+fmtR(ab):'—'}</td><td class="mono"><strong>${fmtR(valeLiq(v))}</strong></td><td><span class="b ${st.c}">${st.l}</span></td></tr>`}).join('')}
+  </table></div></div>`;
+  document.getElementById('rel-content').innerHTML=h;
+}
+
+// ════════════════════════════════════════════════
+// LOGS
+// ════════════════════════════════════════════════
+let logFilter='todos';
+async function renderLogs(){
+  document.getElementById('log-fbar').innerHTML=[{id:'todos',l:'Todos'},{id:'cr',l:'Criações'},{id:'up',l:'Edições'},{id:'dl',l:'Exclusões'},{id:'pm',l:'Pagamentos'},{id:'dv',l:'Devoluções'},{id:'au',l:'Acessos'}].map(f=>`<button class="fb ${logFilter===f.id?'act':''}" onclick="logFilter='${f.id}';renderLogs()">${f.l}</button>`).join('');
+  try{
+    let logs=await API.get('logs',logFilter==='todos'?'select=*&limit=200':`select=*&type=eq.${logFilter}&limit=200`);
+    if(!logs?.length){document.getElementById('log-list').innerHTML='<div class="empty">Nenhum registro.</div>';return}
+    document.getElementById('log-list').innerHTML=logs.map(l=>`<div class="log-li ${l.type}"><strong>${esc(l.action)}</strong>${l.details?' — '+esc(l.details):''}<div class="log-meta">👤 ${esc(l.user_name)} · 🕐 ${new Date(l.ts).toLocaleString('pt-BR')}</div></div>`).join('');
+  }catch(e){document.getElementById('log-list').innerHTML='<div class="empty">Erro ao carregar log.</div>'}
+}
+
+// ════════════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════════════
+if(!CFG.url||!CFG.key){
+  document.getElementById('setup-wrap').style.display='flex';
+}else{
+  document.getElementById('setup-wrap').style.display='none';
+  document.getElementById('login-wrap').style.display='flex';
+}
+</script>
+</body>
+</html>
