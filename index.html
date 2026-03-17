@@ -479,6 +479,26 @@ alter table logs disable row level security;</div>
   <div id="comp-body"></div>
 </div></div>
 
+<!-- Anexar comprovante (vale já pago) -->
+<div class="mo" id="mo-anexar">
+  <div class="mo-box">
+    <div class="mo-hdr"><div class="mo-title">📎 Anexar Comprovante</div><button class="mo-x" onclick="closeMo('mo-anexar')">×</button></div>
+    <div id="anexar-info" style="margin-bottom:14px"></div>
+    <div class="fg">
+      <label>Comprovante (imagem ou PDF — máx 4MB)</label>
+      <div class="fdrop" onclick="document.getElementById('anx-file').click()">
+        <input type="file" id="anx-file" accept="image/*,application/pdf" onchange="handleAnxFile(event)">
+        <div id="anx-file-lbl">📎 Clique para selecionar arquivo</div>
+      </div>
+    </div>
+    <div class="fg"><label>Observações</label><textarea id="anx-obs" placeholder="Número do cheque, banco, referência..."></textarea></div>
+    <div class="btns" style="justify-content:flex-end">
+      <button class="btn" onclick="closeMo('mo-anexar')">Cancelar</button>
+      <button class="btn btn-success" onclick="saveAnexar()" id="btn-save-anx">✓ Salvar comprovante</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ════════════════════════════════════════════════
 // CONFIG & SUPABASE
@@ -864,7 +884,8 @@ function renderValeItem(v){
   const tAbat=abats.reduce((a,d)=>a+parseFloat(d.valor_abatido||0),0);
   let acts='';
   if(can('mark_payment')&&v.status!=='pago')acts+=`<button class="btn btn-sm btn-success" onclick="openPgtoModal('${v.id}')">✓ Pagar</button>`;
-  if(v.status==='pago')acts+=`<button class="btn btn-sm btn-info" onclick="verComp('${v.id}')">📎 Comprovante</button>`;
+  if(v.status==='pago'&&v.comp_data)acts+=`<button class="btn btn-sm btn-info" onclick="verComp('${v.id}')">📎 Ver comprovante</button>`;
+  if(v.status==='pago'&&!v.comp_data&&can('mark_payment'))acts+=`<button class="btn btn-sm btn-info" onclick="openAnexarComp('${v.id}')">📎 Anexar comprovante</button>`;
   if(v.status==='pago'&&CU.role==='admin')acts+=`<button class="btn btn-sm" onclick="desfazerPgto('${v.id}')">Desfazer</button>`;
   if(can('create_dev')&&v.status!=='pago')acts+=`<button class="btn btn-sm btn-purp" onclick="openDevModal('${v.id}')">↩ Devolução</button>`;
   if(can('edit_vale'))acts+=`<button class="btn btn-sm" onclick="openValeModal('${v.id}')">Editar</button>`;
@@ -1017,6 +1038,37 @@ async function desfazerPgto(id){
   if(!confirm('Desfazer pagamento?'))return;
   try{await API.upd('vales',id,{status:'aberto',pago_em:null,pago_by:null,valor_pago:null,pgto_real:null,pgto_obs:null,comp_data:null,comp_name:null,comp_type:null});addLog('up','Pgto desfeito',id);await loadAll();renderVales();renderDash()}catch(e){alert('Erro: '+e.message)}
 }
+let anxValeId=null,anxFileData=null;
+function openAnexarComp(vId){
+  anxValeId=vId;
+  const v=DB.vales.find(x=>x.id===vId);
+  const f=DB.fornecedores.find(x=>x.id===v?.forn_id);
+  document.getElementById('anexar-info').innerHTML=`<div class="card" style="padding:11px;background:var(--bg2)"><div style="font-weight:600;font-size:13px">${esc(f?.nome||'?')}</div><div style="font-size:12px;color:var(--t2);margin-top:2px">${esc(v?.descricao||'')} · Pago em ${fmtD(v?.pago_em)} · ${fmtR(v?.valor_pago||0)}</div></div>`;
+  document.getElementById('anx-file-lbl').innerHTML='📎 Clique para selecionar arquivo';
+  document.getElementById('anx-file').value='';
+  document.getElementById('anx-obs').value=v?.pgto_obs||'';
+  anxFileData=null;
+  openMo('mo-anexar');
+}
+function handleAnxFile(e){
+  const file=e.target.files[0];if(!file)return;
+  if(file.size>4*1024*1024){alert('Arquivo muito grande. Máximo 4MB.');return}
+  const r=new FileReader();
+  r.onload=ev=>{anxFileData={data:ev.target.result,name:file.name,type:file.type};document.getElementById('anx-file-lbl').innerHTML=file.type.startsWith('image/')?`<img src="${ev.target.result}" style="max-width:100%;max-height:90px;border-radius:6px;object-fit:contain"><br><span style="font-size:11px">${file.name}</span>`:`<div>📄 ${file.name}</div>`};
+  r.readAsDataURL(file);
+}
+async function saveAnexar(){
+  if(!anxFileData){alert('Selecione um arquivo antes de salvar.');return}
+  const v=DB.vales.find(x=>x.id===anxValeId);if(!v)return;
+  const f=DB.fornecedores.find(x=>x.id===v.forn_id);
+  const upd={comp_data:anxFileData.data,comp_name:anxFileData.name,comp_type:anxFileData.type,pgto_obs:document.getElementById('anx-obs').value};
+  try{
+    await API.upd('vales',anxValeId,upd);
+    addLog('pm','Comprovante anexado',`${f?.nome||''} · ${anxFileData.name} · por ${CU.name}`);
+    await loadAll();closeMo('mo-anexar');anxFileData=null;
+    renderVales();if(can('view_fin'))renderFin();
+  }catch(e){alert('Erro: '+e.message)}
+}
 function verComp(vId){
   const v=DB.vales.find(x=>x.id===vId);const f=DB.fornecedores.find(x=>x.id===v?.forn_id);
   let h=`<div class="card" style="padding:12px;margin-bottom:14px"><div style="font-weight:600">${esc(f?.nome||'?')} · ${fmtR(v?.valor_pago||0)}</div><div style="font-size:12px;color:var(--t2)">Pago em ${fmtD(v?.pago_em)} · ${esc(v?.pgto_real||'')} · por ${USERS[v?.pago_by]?.name||v?.pago_by||'?'}</div>${v?.pgto_obs?`<div style="font-size:12px;color:var(--t2)">📝 ${esc(v.pgto_obs)}</div>`:''}</div>`;
@@ -1048,7 +1100,7 @@ function renderFin(){
   if(!pagos.length){document.getElementById('fin-content').innerHTML='<div class="empty">Nenhum pagamento neste período.</div>';return}
   document.getElementById('fin-content').innerHTML=`<div class="card" style="padding:0;overflow:hidden"><div class="tw"><table>
     <tr><th>Data pgto</th><th>Fornecedor</th><th>Descrição</th><th>Valor pago</th><th>Forma</th><th>Por</th><th>Comp.</th></tr>
-    ${[...pagos].sort((a,b)=>(b.pago_em||'').localeCompare(a.pago_em||'')).map(v=>{const f=DB.fornecedores.find(x=>x.id===v.forn_id);return`<tr><td><strong>${fmtD(v.pago_em)}</strong></td><td>${esc(f?.nome||'—')}</td><td style="max-width:160px;font-size:11px;color:var(--t2)">${esc(v.descricao||'—')}</td><td class="mono" style="font-weight:700">${fmtR(v.valor_pago)}</td><td>${pgtoTag(v.pgto_real||'')}</td><td style="font-size:11px">${USERS[v.pago_by]?.name||'—'}</td><td>${v.comp_data?`<button class="btn btn-sm btn-info" onclick="verComp('${v.id}')">Ver</button>`:'—'}</td></tr>`}).join('')}
+    ${[...pagos].sort((a,b)=>(b.pago_em||'').localeCompare(a.pago_em||'')).map(v=>{const f=DB.fornecedores.find(x=>x.id===v.forn_id);return`<tr><td><strong>${fmtD(v.pago_em)}</strong></td><td>${esc(f?.nome||'—')}</td><td style="max-width:160px;font-size:11px;color:var(--t2)">${esc(v.descricao||'—')}</td><td class="mono" style="font-weight:700">${fmtR(v.valor_pago)}</td><td>${pgtoTag(v.pgto_real||'')}</td><td style="font-size:11px">${USERS[v.pago_by]?.name||'—'}</td><td>${v.comp_data?`<button class="btn btn-sm btn-info" onclick="verComp('${v.id}')">Ver</button>`:can('mark_payment')?`<button class="btn btn-sm" onclick="openAnexarComp('${v.id}')">📎 Anexar</button>`:'—'}</td></tr>`}).join('')}
   </table></div></div>`;
 }
 
