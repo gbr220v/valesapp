@@ -483,7 +483,7 @@ alter table logs disable row level security;</div>
 // ════════════════════════════════════════════════
 // CONFIG & SUPABASE
 // ════════════════════════════════════════════════
-let CFG = {url:'',key:''};
+let CFG = {url:'https://puceuarmvmlihqeeisjk.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1Y2V1YXJtdm1saWhxZWVpc2prIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTgxNjEsImV4cCI6MjA4OTMzNDE2MX0.g6wSUbTsZZLKnMtcEIjjZE02q9vp6EqRUrLjeYH1O4E'};
 try{const c=localStorage.getItem('valesapp_cfg');if(c){CFG=JSON.parse(c)}}catch(e){}
 
 const API = {
@@ -512,7 +512,7 @@ function hdr(){return{'apikey':CFG.key,'Authorization':'Bearer '+CFG.key,'Conten
 function saveConfig(){
   CFG.url=document.getElementById('cfg-url').value.trim().replace(/\/$/,'');
   CFG.key=document.getElementById('cfg-key').value.trim();
-  if(!CFG.url||!CFG.key){setCfgMsg('Preencha os dois campos.','red');return}
+  if(false){setCfgMsg('Preencha os dois campos.','red');return}
   localStorage.setItem('valesapp_cfg',JSON.stringify(CFG));
   testConnection(true);
 }
@@ -1118,7 +1118,7 @@ async function renderLogs(){
 // ════════════════════════════════════════════════
 // BOOT
 // ════════════════════════════════════════════════
-if(!CFG.url||!CFG.key){
+if(false){
   document.getElementById('setup-wrap').style.display='flex';
 }else{
   document.getElementById('setup-wrap').style.display='none';
