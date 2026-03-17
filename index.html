@@ -345,6 +345,23 @@ alter table logs disable row level security;</div>
           </div>
         </div>
         <div id="vales-summary"></div>
+        <!-- barra de seleção em lote -->
+        <div id="bulk-bar" style="display:none;position:sticky;bottom:16px;z-index:99;margin-bottom:8px">
+          <div style="background:var(--blu);color:#fff;border-radius:var(--rl);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:0 4px 20px rgba(22,79,140,.35)">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600">
+                <input type="checkbox" id="sel-all-chk" onchange="toggleSelAll(this.checked)" style="width:15px;height:15px;accent-color:#fff">
+                Selec. todos
+              </label>
+              <span id="bulk-count" style="font-size:13px;font-weight:700"></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <span id="bulk-total" style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace"></span>
+              <button class="btn btn-sm" onclick="clearSel()" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff">Limpar</button>
+              <button class="btn btn-sm" onclick="openLoteModal()" style="background:#fff;color:var(--blu);border-color:#fff;font-weight:700">✓ Pagar selecionados</button>
+            </div>
+          </div>
+        </div>
         <div id="vales-list"></div>
       </div>
 
@@ -619,7 +636,7 @@ async function doLogin(){
   await loadAll();
   goTo('dashboard');
 }
-function doLogout(){addLog('au','Logout',USERS[CU.id].name+' saiu');CU=null;selUID=null;vFilter='abertos';finFilter='30d';relFilter='semana';relOffset=0;logFilter='todos';DB={fornecedores:[],vales:[],devolucoes:[]};document.getElementById('app').style.display='none';document.getElementById('login-wrap').style.display='flex';document.querySelectorAll('.upill').forEach(p=>p.classList.remove('sel'));document.getElementById('l-user').value=''}
+function doLogout(){addLog('au','Logout',USERS[CU.id].name+' saiu');CU=null;selUID=null;selIds=new Set();vFilter='abertos';finFilter='30d';relFilter='semana';relOffset=0;logFilter='todos';DB={fornecedores:[],vales:[],devolucoes:[]};document.getElementById('app').style.display='none';document.getElementById('login-wrap').style.display='flex';document.querySelectorAll('.upill').forEach(p=>p.classList.remove('sel'));document.getElementById('l-user').value=''}
 
 function goTo(p){
   document.querySelectorAll('.pg').forEach(x=>x.classList.remove('act'));
@@ -939,7 +956,7 @@ async function delForn(id){
 // ════════════════════════════════════════════════
 // VALES
 // ════════════════════════════════════════════════
-let editValeId=null,vFilter='abertos';
+let editValeId=null,vFilter='abertos',selIds=new Set();
 function renderVales(){
   document.getElementById('vales-acts').innerHTML=can('create_vale')?`<button class="btn btn-primary" onclick="openValeModal(null)">+ Novo vale</button>`:'';
   const fDefs=[{id:'abertos',l:'Em aberto'},{id:'atrasados',l:'Atrasados'},{id:'7d',l:'Últ. 7 dias'},{id:'15d',l:'Últ. 15 dias'},{id:'30d',l:'Últ. 30 dias'},{id:'periodo',l:'Por período'},{id:'pagos',l:'Pagos'},{id:'todos',l:'Todos'}];
@@ -950,6 +967,7 @@ function renderVales(){
   const list=getValeList();
   renderValesSummary(list);
   document.getElementById('vales-list').innerHTML=list.length?list.map(v=>renderValeItem(v)).join(''):'<div class="empty">Nenhum vale neste filtro.</div>';
+  updBulkBar();
 }
 function getValeList(){
   const t=today();
@@ -997,8 +1015,10 @@ function renderValeItem(v){
   if(can('create_dev')&&v.status!=='pago')acts+=`<button class="btn btn-sm btn-purp" onclick="openDevModal('${v.id}')">↩ Devolução</button>`;
   if(can('edit_vale'))acts+=`<button class="btn btn-sm" onclick="openValeModal('${v.id}')">Editar</button>`;
   if(CU.role==='admin')acts+=`<button class="btn btn-sm btn-danger" onclick="delVale('${v.id}')">Excluir</button>`;
-  return`<div class="li ${v.status==='pago'?'pago':''}">
+  const showChk=can('mark_payment')&&v.status!=='pago';
+  return`<div class="li ${v.status==='pago'?'pago':''}" id="vale-li-${v.id}">
     <div class="li-h">
+      ${showChk?`<label style="display:flex;align-items:flex-start;padding-top:2px;margin-right:10px;cursor:pointer"><input type="checkbox" class="vale-chk" data-id="${v.id}" data-val="${valeLiq(v)}" onchange="onChkChange(this)" ${selIds.has(v.id)?'checked':''} style="width:15px;height:15px;margin-top:2px;flex-shrink:0;accent-color:var(--grn)"></label>`:''}
       <div style="flex:1;min-width:0">
         <div class="li-name">${esc(f?.nome||'Fornecedor removido')}</div>
         <div class="li-sub">${esc(v.descricao||'—')}</div>
@@ -1133,6 +1153,118 @@ async function delVale(id){
   try{await API.del('vales',id);addLog('dl','Vale excluído',id);await loadAll();renderVales();renderDash()}catch(e){alert('Erro: '+e.message)}
 }
 
+// ════════════════════════════════════════════════
+// SELEÇÃO EM LOTE
+// ════════════════════════════════════════════════
+function onChkChange(el){
+  const id=el.dataset.id;
+  if(el.checked)selIds.add(id);else selIds.delete(id);
+  updBulkBar();
+  const li=document.getElementById('vale-li-'+id);
+  if(li)li.style.outline=el.checked?'2px solid var(--grn)':'none';
+}
+function toggleSelAll(checked){
+  document.querySelectorAll('.vale-chk').forEach(el=>{
+    el.checked=checked;
+    const id=el.dataset.id;
+    if(checked)selIds.add(id);else selIds.delete(id);
+    const li=document.getElementById('vale-li-'+id);
+    if(li)li.style.outline=checked?'2px solid var(--grn)':'none';
+  });
+  updBulkBar();
+}
+function clearSel(){
+  selIds.clear();
+  document.querySelectorAll('.vale-chk').forEach(el=>{el.checked=false});
+  document.querySelectorAll('[id^=vale-li-]').forEach(el=>el.style.outline='none');
+  const chk=document.getElementById('sel-all-chk');if(chk)chk.checked=false;
+  updBulkBar();
+}
+function updBulkBar(){
+  const bar=document.getElementById('bulk-bar');if(!bar)return;
+  if(!can('mark_payment')){bar.style.display='none';return}
+  const n=selIds.size;
+  if(n===0){bar.style.display='none';return}
+  bar.style.display='block';
+  const total=[...selIds].reduce((a,id)=>{const v=DB.vales.find(x=>x.id===id);return a+(v?valeLiq(v):0)},0);
+  document.getElementById('bulk-count').textContent=`${n} vale${n!==1?'s':''} selecionado${n!==1?'s':''}`;
+  document.getElementById('bulk-total').textContent=fmtR(total);
+  // sync sel-all checkbox
+  const allChks=document.querySelectorAll('.vale-chk');
+  const allSel=allChks.length>0&&[...allChks].every(el=>selIds.has(el.dataset.id));
+  const chk=document.getElementById('sel-all-chk');if(chk)chk.checked=allSel;
+}
+let loteFileData=null;
+function openLoteModal(){
+  if(!selIds.size){alert('Selecione ao menos um vale.');return}
+  const vales=[...selIds].map(id=>DB.vales.find(x=>x.id===id)).filter(Boolean);
+  const total=vales.reduce((a,v)=>a+valeLiq(v),0);
+  document.getElementById('lote-resumo').innerHTML=`
+    <div class="card" style="padding:13px;background:var(--bg2)">
+      <div style="font-size:13px;font-weight:700;color:var(--grn);margin-bottom:10px">✅ ${vales.length} vale${vales.length!==1?'s':''} · Total: ${fmtR(total)}</div>
+      <div style="max-height:180px;overflow-y:auto">
+        ${vales.map(v=>{const f=DB.fornecedores.find(x=>x.id===v.forn_id);return`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bg2);font-size:12px"><span>${esc(f?.nome||'?')} <span style="color:var(--t2)">· ${fmtD(v.vencimento)}</span></span><strong style="font-family:'DM Mono',monospace">${fmtR(valeLiq(v))}</strong></div>`}).join('')}
+      </div>
+    </div>`;
+  document.getElementById('lt-data').value=today();
+  document.getElementById('lt-forma').value='PIX';
+  document.getElementById('lt-obs').value='';
+  document.getElementById('lt-file-lbl').innerHTML='📎 Clique para anexar comprovante (opcional)';
+  document.getElementById('lt-file').value='';
+  document.getElementById('lt-progress').style.display='none';
+  loteFileData=null;
+  openMo('mo-lote');
+}
+function handleLoteFile(e){
+  const file=e.target.files[0];if(!file)return;
+  if(file.size>4*1024*1024){alert('Arquivo muito grande. Máximo 4MB.');return}
+  const r=new FileReader();
+  r.onload=ev=>{
+    loteFileData={data:ev.target.result,name:file.name,type:file.type};
+    document.getElementById('lt-file-lbl').innerHTML=file.type.startsWith('image/')
+      ?`<img src="${ev.target.result}" style="max-width:100%;max-height:90px;border-radius:6px;object-fit:contain"><br><span style="font-size:11px">${file.name}</span>`
+      :`<div>📄 ${file.name}</div>`;
+  };
+  r.readAsDataURL(file);
+}
+async function saveLote(){
+  const vales=[...selIds].map(id=>DB.vales.find(x=>x.id===id)).filter(Boolean);
+  if(!vales.length){alert('Nenhum vale válido selecionado.');return}
+  const dt=document.getElementById('lt-data').value;
+  const forma=document.getElementById('lt-forma').value;
+  const obs=document.getElementById('lt-obs').value;
+  if(!dt){alert('Informe a data do pagamento.');return}
+  const prog=document.getElementById('lt-progress');
+  const progTxt=document.getElementById('lt-prog-txt');
+  const progBar=document.getElementById('lt-prog-bar');
+  prog.style.display='block';
+  document.getElementById('btn-save-lote').disabled=true;
+  document.getElementById('lt-cancel').disabled=true;
+  let done=0;
+  const erros=[];
+  for(const v of vales){
+    const liq=valeLiq(v);
+    const upd={status:'pago',pago_em:dt,pago_by:CU.id,valor_pago:liq,pgto_real:forma,pgto_obs:obs};
+    if(loteFileData){upd.comp_data=loteFileData.data;upd.comp_name=loteFileData.name;upd.comp_type=loteFileData.type}
+    try{
+      await API.upd('vales',v.id,upd);
+      done++;
+      const pct=Math.round(done/vales.length*100);
+      progBar.style.width=pct+'%';
+      progTxt.textContent=`Processando ${done}/${vales.length}...`;
+    }catch(e){erros.push(v.id)}
+  }
+  const f=DB.fornecedores;
+  addLog('pm','Pagamento em lote',`${done} vale${done!==1?'s':''} pagos · ${fmtR(vales.reduce((a,v)=>a+valeLiq(v),0))} · ${forma} · por ${CU.name}`);
+  await loadAll();
+  selIds.clear();
+  loteFileData=null;
+  document.getElementById('btn-save-lote').disabled=false;
+  document.getElementById('lt-cancel').disabled=false;
+  closeMo('mo-lote');
+  renderVales();renderDash();if(can('view_fin'))renderFin();
+  if(erros.length)alert(`${done} vale${done!==1?'s':''} pagos com sucesso!\n${erros.length} erro(s) — tente novamente.`);
+}
 // ════════════════════════════════════════════════
 // DEVOLUÇÕES
 // ════════════════════════════════════════════════
@@ -1366,5 +1498,34 @@ if(false){
   document.getElementById('login-wrap').style.display='flex';
 }
 </script>
+<!-- Modal pagamento em lote -->
+<div class="mo" id="mo-lote">
+  <div class="mo-box wide">
+    <div class="mo-hdr"><div class="mo-title">✅ Pagar vales selecionados</div><button class="mo-x" onclick="closeMo('mo-lote')">×</button></div>
+    <div id="lote-resumo" style="margin-bottom:16px"></div>
+    <div class="fr">
+      <div class="fg"><label>Data do pagamento *</label><input type="date" id="lt-data"></div>
+      <div class="fg"><label>Forma de pagamento *</label><select id="lt-forma"><option>PIX</option><option>Cheque</option><option>Cartão</option><option>Dinheiro</option></select></div>
+    </div>
+    <div class="fg">
+      <label>Comprovante único (imagem ou PDF — máx 4MB)</label>
+      <div class="fdrop" onclick="document.getElementById('lt-file').click()">
+        <input type="file" id="lt-file" accept="image/*,application/pdf" onchange="handleLoteFile(event)">
+        <div id="lt-file-lbl">📎 Clique para anexar comprovante (opcional)</div>
+      </div>
+    </div>
+    <div class="fg"><label>Observações</label><textarea id="lt-obs" placeholder="Referência, número do cheque..."></textarea></div>
+    <div id="lt-progress" style="display:none;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--t2);margin-bottom:6px" id="lt-prog-txt">Processando...</div>
+      <div style="background:var(--bg2);border-radius:20px;height:8px;overflow:hidden">
+        <div id="lt-prog-bar" style="height:100%;background:var(--grn);border-radius:20px;width:0%;transition:width .3s"></div>
+      </div>
+    </div>
+    <div class="btns" style="justify-content:flex-end">
+      <button class="btn" onclick="closeMo('mo-lote')" id="lt-cancel">Cancelar</button>
+      <button class="btn btn-success" onclick="saveLote()" id="btn-save-lote">✓ Confirmar pagamento em lote</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
