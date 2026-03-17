@@ -607,7 +607,7 @@ async function doLogin(){
   await loadAll();
   goTo('dashboard');
 }
-function doLogout(){addLog('au','Logout',USERS[CU.id].name+' saiu');CU=null;selUID=null;document.getElementById('app').style.display='none';document.getElementById('login-wrap').style.display='flex';document.querySelectorAll('.upill').forEach(p=>p.classList.remove('sel'));document.getElementById('l-user').value=''}
+function doLogout(){addLog('au','Logout',USERS[CU.id].name+' saiu');CU=null;selUID=null;vFilter='abertos';finFilter='30d';relFilter='semana';relOffset=0;logFilter='todos';DB={fornecedores:[],vales:[],devolucoes:[]};document.getElementById('app').style.display='none';document.getElementById('login-wrap').style.display='flex';document.querySelectorAll('.upill').forEach(p=>p.classList.remove('sel'));document.getElementById('l-user').value=''}
 
 function goTo(p){
   document.querySelectorAll('.pg').forEach(x=>x.classList.remove('act'));
@@ -628,7 +628,7 @@ function can(p){if(CU?.role==='admin')return true;const m={create_vale:['pedidos
 let DB={fornecedores:[],vales:[],devolucoes:[]};
 async function loadAll(){
   try{
-    const[f,v,d]=await Promise.all([API.get('fornecedores'),API.get('vales'),API.get('devolucoes')]);
+    const[f,v,d]=await Promise.all([API.get('fornecedores'),API.get('vales','select=id,forn_id,data,valor_original,pgto,descricao,obs,vencimento,status,pago_em,pago_by,valor_pago,pgto_real,pgto_obs,comp_name,comp_type,created_at,created_by'),API.get('devolucoes')]);
     DB.fornecedores=f||[];DB.vales=v||[];DB.devolucoes=d||[];
   }catch(e){console.error('Load error',e)}
 }
@@ -649,6 +649,7 @@ const closeMo=id=>document.getElementById(id).classList.remove('open');
 const setLoading=(btnId,on)=>{const b=document.getElementById(btnId);if(b){b.disabled=on;b.textContent=on?'Salvando...':b.getAttribute('data-orig')||b.textContent}};
 
 function valeLiq(v){
+  if(!v)return 0;
   const a=DB.devolucoes.filter(d=>d.vale_id===v.id&&d.tipo==='abatimento');
   return Math.max(0,parseFloat(v.valor_original||0)-a.reduce((s,d)=>s+parseFloat(d.valor_abatido||0),0));
 }
@@ -658,7 +659,8 @@ function stBadge(v){
   if(d<0)return{l:`Atrasado ${Math.abs(d)}d`,c:'b-red'};
   if(d===0)return{l:'Vence hoje',c:'b-red'};
   if(d<=3)return{l:`Vence em ${d}d`,c:'b-yel'};
-  return{l:`${d}d`,c:'b-gy'};
+  if(d<=7)return{l:`Vence em ${d}d`,c:'b-amr'};
+  return{l:`Vence em ${d}d`,c:'b-gy'};
 }
 function pgtoTag(p){const m={PIX:'b-blu',Cheque:'b-purp',Cartão:'b-yel',Dinheiro:'b-teal'};return p?`<span class="b ${m[p]||'b-gy'}">${p}</span>`:''}
 
@@ -715,7 +717,7 @@ function renderDash(){
   const pont=pagos.length>0?Math.round(noPrazo/pagos.length*100):100;
 
   // Próximo vencimento
-  const proxV=abertos.sort((a,b)=>a.vencimento.localeCompare(b.vencimento))[0];
+  const proxV=[...abertos].sort((a,b)=>a.vencimento.localeCompare(b.vencimento))[0];
   const proxDiff=proxV?diffDays(proxV.vencimento):null;
 
   // Média de atraso
@@ -825,7 +827,7 @@ function openFornModal(id){
   editFornId=id||null;
   document.getElementById('mo-forn-t').textContent=id?'Editar Fornecedor':'Novo Fornecedor';
   const f=id?DB.fornecedores.find(x=>x.id===id):null;
-  ['ff-nome','ff-tel','ff-obs'].forEach(i=>document.getElementById(i).value=f?.(i.replace('ff-',''))||'');
+  ['ff-nome','ff-tel','ff-obs'].forEach(i=>document.getElementById(i).value=f?.[i.replace('ff-','')]||'');
   document.getElementById('ff-prazo').value=f?.prazo||'';
   document.getElementById('ff-pgto').value=f?.pgto||'PIX';
   openMo('mo-forn');
@@ -971,7 +973,7 @@ function getProdDesc(){
     const nome=tr.querySelector('[data-role=nome]')?.value?.trim()||'';
     const qtd=parseFloat(tr.querySelector('[data-role=qtd]')?.value||0);
     const unit=parseFloat(tr.querySelector('[data-role=unit]')?.value||0);
-    if(nome||qtd||unit)rows.push(`${nome} (${qtd}x R$${unit.toLocaleString('pt-BR',{minimumFractionDigits:2})} = R$${(qtd*unit).toLocaleString('pt-BR',{minimumFractionDigits:2})})`);
+    if(nome||qtd||unit)rows.push(`${nome} (${qtd}x R$${unit.toFixed(2)} = R$${(qtd*unit).toFixed(2)})`);
   });
   return rows.join(' | ');
 }
@@ -983,7 +985,7 @@ function loadProdRows(descricao){
     const parts=descricao.split(' | ');
     let parsed=false;
     parts.forEach(p=>{
-      const m=p.match(/^(.+?)\s*\((\d+(?:[.,]\d+)?)x\s*R\$(\d+(?:[.,]\d+)?)\s*=/);
+      const m=p.match(/^(.+?)\s*\((\d+(?:\.\d+)?)x\s*R\$(\d+(?:\.\d+)?)\s*=/);
       if(m){
         const nome=m[1].trim();
         const qtd=m[2].replace(',','.');
@@ -1074,7 +1076,7 @@ async function saveDev(){
 function renderDevs(){
   const el=document.getElementById('devs-list');
   if(!DB.devolucoes.length){el.innerHTML='<div class="empty">Nenhuma devolução registrada.</div>';return}
-  el.innerHTML=[...DB.devolucoes].sort((a,b)=>b.created_at.localeCompare(a.created_at)).map(d=>{
+  el.innerHTML=[...DB.devolucoes].sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(d=>{
     const v=DB.vales.find(x=>x.id===d.vale_id);const f=DB.fornecedores.find(x=>x.id===v?.forn_id);
     const isA=d.tipo==='abatimento';
     return`<div class="li"><div class="li-h">
@@ -1157,11 +1159,13 @@ async function saveAnexar(){
     renderVales();if(can('view_fin'))renderFin();
   }catch(e){alert('Erro: '+e.message)}
 }
-function verComp(vId){
+async function verComp(vId){
   const v=DB.vales.find(x=>x.id===vId);const f=DB.fornecedores.find(x=>x.id===v?.forn_id);
+  let compData=null,compName=v?.comp_name,compType=v?.comp_type;
+  if(v?.comp_name){try{const r=await fetch(`${CFG.url}/rest/v1/vales?id=eq.${vId}&select=comp_data`,{headers:hdr()});const d=await r.json();compData=d?.[0]?.comp_data}catch(e){}}
   let h=`<div class="card" style="padding:12px;margin-bottom:14px"><div style="font-weight:600">${esc(f?.nome||'?')} · ${fmtR(v?.valor_pago||0)}</div><div style="font-size:12px;color:var(--t2)">Pago em ${fmtD(v?.pago_em)} · ${esc(v?.pgto_real||'')} · por ${USERS[v?.pago_by]?.name||v?.pago_by||'?'}</div>${v?.pgto_obs?`<div style="font-size:12px;color:var(--t2)">📝 ${esc(v.pgto_obs)}</div>`:''}</div>`;
-  if(v?.comp_data){h+=v.comp_type?.startsWith('image/')?`<img src="${v.comp_data}" style="max-width:100%;border-radius:var(--r)">`:`<a href="${v.comp_data}" download="${v.comp_name}" class="btn btn-info">📄 Baixar ${esc(v.comp_name)}</a>`}
-  else h+='<div class="empty">Nenhum comprovante.</div>';
+  if(compData){h+=compType?.startsWith('image/')?`<img src="${compData}" style="max-width:100%;border-radius:var(--r)">`:`<a href="${compData}" download="${compName}" class="btn btn-info">📄 Baixar ${esc(compName)}</a>`}
+  else h+='<div class="empty">Nenhum comprovante anexado.</div>';
   document.getElementById('comp-body').innerHTML=h;openMo('mo-comp');
 }
 
@@ -1249,10 +1253,13 @@ let logFilter='todos';
 async function renderLogs(){
   document.getElementById('log-fbar').innerHTML=[{id:'todos',l:'Todos'},{id:'cr',l:'Criações'},{id:'up',l:'Edições'},{id:'dl',l:'Exclusões'},{id:'pm',l:'Pagamentos'},{id:'dv',l:'Devoluções'},{id:'au',l:'Acessos'}].map(f=>`<button class="fb ${logFilter===f.id?'act':''}" onclick="logFilter='${f.id}';renderLogs()">${f.l}</button>`).join('');
   try{
-    let logs=await API.get('logs',logFilter==='todos'?'select=*&limit=200':`select=*&type=eq.${logFilter}&limit=200`);
-    if(!logs?.length){document.getElementById('log-list').innerHTML='<div class="empty">Nenhum registro.</div>';return}
-    document.getElementById('log-list').innerHTML=logs.map(l=>`<div class="log-li ${l.type}"><strong>${esc(l.action)}</strong>${l.details?' — '+esc(l.details):''}<div class="log-meta">👤 ${esc(l.user_name)} · 🕐 ${new Date(l.ts).toLocaleString('pt-BR')}</div></div>`).join('');
-  }catch(e){document.getElementById('log-list').innerHTML='<div class="empty">Erro ao carregar log.</div>'}
+    const qs=logFilter==='todos'?'select=*&limit=300&order=ts.desc':`select=*&type=eq.${logFilter}&limit=300&order=ts.desc`;
+    const r=await fetch(`${CFG.url}/rest/v1/logs?${qs}`,{headers:hdr()});
+    if(!r.ok)throw new Error(await r.text());
+    const logs=await r.json();
+    if(!logs?.length){document.getElementById('log-list').innerHTML='<div class="empty">Nenhum registro de atividade ainda.</div>';return}
+    document.getElementById('log-list').innerHTML=logs.map(l=>`<div class="log-li ${l.type||'au'}"><strong>${esc(l.action)}</strong>${l.details?' — '+esc(l.details):''}<div class="log-meta">👤 ${esc(l.user_name||'?')} · 🕐 ${new Date(l.ts).toLocaleString('pt-BR')}</div></div>`).join('');
+  }catch(e){document.getElementById('log-list').innerHTML=`<div class="empty">Erro: ${e.message}</div>`}
 }
 
 // ════════════════════════════════════════════════
