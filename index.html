@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>ValesApp</title>
+<title>Vales - Franca Griffe</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -276,8 +276,8 @@ alter table logs disable row level security;</div>
   <div class="login-card">
     <div class="login-brand">
       <div class="lmark">📋</div>
-      <h1>ValesApp</h1>
-      <p>Sistema interno de controle de vales</p>
+      <h1>Vales - Franca Griffe</h1>
+      <p>Sistema interno · Franca Griffe</p>
     </div>
     <div class="usel-label">Selecione seu usuário</div>
     <div class="upills">
@@ -307,7 +307,7 @@ alter table logs disable row level security;</div>
   <div class="layout">
     <div class="sidebar" id="sidebar">
       <div class="sb-head">
-        <div class="sb-logo"><div class="sb-lm">📋</div><div><h2>ValesApp</h2><span>Sistema Interno</span></div></div>
+        <div class="sb-logo"><div class="sb-lm">📋</div><div><h2>Franca Griffe</h2><span>Vales a Pagar</span></div></div>
       </div>
       <div class="sb-user"><div class="av" id="sb-av"></div><div><div style="font-size:12px;font-weight:600" id="sb-uname"></div><div style="font-size:10px;color:var(--t3)" id="sb-urole"></div></div></div>
       <div class="sb-nav" id="sb-nav"></div>
@@ -414,9 +414,21 @@ alter table logs disable row level security;</div>
   <div class="mo-box">
     <div class="mo-hdr"><div class="mo-title" id="mo-forn-t">Fornecedor</div><button class="mo-x" onclick="closeMo('mo-forn')">×</button></div>
     <div class="fr"><div class="fg"><label>Nome *</label><input type="text" id="ff-nome"></div><div class="fg"><label>Contato / Telefone</label><input type="text" id="ff-tel"></div></div>
-    <div class="fr">
-      <div class="fg"><label>Prazo de pagamento (dias)</label><input type="number" id="ff-prazo" min="0"></div>
+    <div class="fg"><label>Regra de vencimento</label>
+      <select id="ff-regra" onchange="togglePrazoField()">
+        <option value="sexta">Sexta-feira da mesma semana (Rogério-style)</option>
+        <option value="segunda_proxima">Segunda-feira da semana seguinte</option>
+        <option value="quinzenal">Dia 1–15 → dia 20 | Dia 16–31 → dia 05 próx. mês</option>
+        <option value="mensal_1">Dia 1º do mês seguinte</option>
+        <option value="dias">Prazo fixo em dias</option>
+      </select>
+    </div>
+    <div class="fr" id="ff-prazo-row" style="display:none">
+      <div class="fg"><label>Prazo (dias)</label><input type="number" id="ff-prazo" min="0" placeholder="Ex: 7, 15, 30"></div>
       <div class="fg"><label>Forma de pgto padrão</label><select id="ff-pgto"><option>PIX</option><option>Cheque</option><option>Cartão</option><option>Dinheiro</option></select></div>
+    </div>
+    <div class="fr" id="ff-pgto-row">
+      <div class="fg"><label>Forma de pgto padrão</label><select id="ff-pgto2"><option>PIX</option><option>Cheque</option><option>Cartão</option><option>Dinheiro</option></select></div>
     </div>
     <div class="fg"><label>Observações (banco, dados, etc.)</label><textarea id="ff-obs"></textarea></div>
     <div class="btns" style="justify-content:flex-end"><button class="btn" onclick="closeMo('mo-forn')">Cancelar</button><button class="btn btn-primary" onclick="saveForn()" id="btn-save-forn">Salvar</button></div>
@@ -630,7 +642,25 @@ async function loadAll(){
   try{
     const[f,v,d]=await Promise.all([API.get('fornecedores'),API.get('vales','select=id,forn_id,data,valor_original,pgto,descricao,obs,vencimento,status,pago_em,pago_by,valor_pago,pgto_real,pgto_obs,comp_name,comp_type,created_at,created_by'),API.get('devolucoes')]);
     DB.fornecedores=f||[];DB.vales=v||[];DB.devolucoes=d||[];
+    if(DB.fornecedores.length===0)await seedFornecedores();
   }catch(e){console.error('Load error',e)}
+}
+
+async function seedFornecedores(){
+  const seed=[
+    {nome:'Rogério-Chinelos',tel:'',prazo:0,pgto:'PIX',regra:'sexta',obs:'Paga toda sexta-feira da semana corrente'},
+    {nome:'Cla-Cle',tel:'',prazo:0,pgto:'PIX',regra:'segunda_proxima',obs:'Paga na segunda-feira da próxima semana'},
+    {nome:'Ranster',tel:'',prazo:0,pgto:'PIX',regra:'segunda_proxima',obs:'Paga na segunda-feira da próxima semana'},
+    {nome:'Gilvan GTS',tel:'',prazo:0,pgto:'PIX',regra:'quinzenal',obs:'Dia 1–15 paga dia 20 | Dia 16–31 paga dia 05 do próximo mês'},
+    {nome:'Dezem',tel:'',prazo:0,pgto:'PIX',regra:'mensal_1',obs:'Pagamento mensal, geralmente no dia 1º'},
+    {nome:'Stefanini',tel:'',prazo:0,pgto:'PIX',regra:'mensal_1',obs:'Tudo do mês corrente paga no dia 1º do mês seguinte'},
+  ];
+  try{
+    for(const f of seed){await API.ins('fornecedores',{...f,created_by:'sistema'})}
+    const fresh=await API.get('fornecedores');
+    DB.fornecedores=fresh||[];
+    console.log('Fornecedores cadastrados com sucesso!');
+  }catch(e){console.error('Seed error',e)}
 }
 
 // ════════════════════════════════════════════════
@@ -642,6 +672,50 @@ const nowISO=()=>new Date().toISOString();
 const fmtD=s=>{if(!s)return'—';const[y,m,d]=(s+'').slice(0,10).split('-');return`${d}/${m}/${y}`};
 const fmtR=n=>'R$ '+parseFloat(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const addDays=(s,n)=>{const d=new Date(s+'T12:00:00');d.setDate(d.getDate()+parseInt(n||0));return d.toISOString().slice(0,10)};
+
+// ── MOTOR DE VENCIMENTO POR REGRA ──
+function calcVencimento(dataStr, forn){
+  if(!forn||!dataStr)return dataStr||today();
+  const dt=new Date(dataStr+'T12:00:00');
+  const rule=forn.regra||'dias';
+
+  if(rule==='sexta'){
+    // Mon-Fri → pay on Friday of SAME week
+    const dow=dt.getDay(); // 0=Sun,1=Mon..5=Fri,6=Sat
+    let daysToFri=5-dow;
+    if(daysToFri<0)daysToFri+=7; // if Sat/Sun, next Friday
+    const v=new Date(dt);v.setDate(dt.getDate()+daysToFri);
+    return v.toISOString().slice(0,10);
+  }
+  if(rule==='segunda_proxima'){
+    // Mon-Fri → pay on Monday of NEXT week
+    const dow=dt.getDay();
+    const daysToNextMon=dow===0?1:(8-dow); // 0=Sun→+1, 1=Mon→+7, 2=Tue→+6...
+    const toAdd=dow===1?7:daysToNextMon;
+    const v=new Date(dt);v.setDate(dt.getDate()+toAdd);
+    return v.toISOString().slice(0,10);
+  }
+  if(rule==='quinzenal'){
+    // Day 1-15 → 20th same month; Day 16-31 → 5th next month
+    const day=dt.getDate();
+    let v;
+    if(day<=15){v=new Date(dt.getFullYear(),dt.getMonth(),20)}
+    else{v=new Date(dt.getFullYear(),dt.getMonth()+1,5)}
+    return v.toISOString().slice(0,10);
+  }
+  if(rule==='mensal_1'){
+    // Always 1st of next month
+    const v=new Date(dt.getFullYear(),dt.getMonth()+1,1);
+    return v.toISOString().slice(0,10);
+  }
+  // Default: prazo em dias
+  return addDays(dataStr, forn.prazo||0);
+}
+
+function regraDesc(forn){
+  const m={sexta:'Paga toda sexta-feira',segunda_proxima:'Paga na segunda da próxima semana',quinzenal:'Dia 1–15 → paga dia 20 | Dia 16–31 → paga dia 05 do próximo mês',mensal_1:'Paga no dia 1º do mês seguinte',dias:`Prazo de ${forn.prazo||0} dias`};
+  return m[forn.regra||'dias']||'Prazo em dias';
+}
 const diffDays=s=>{const t=new Date();t.setHours(0,0,0,0);const d=new Date(s+'T12:00:00');return Math.floor((d-t)/86400000)};
 const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const openMo=id=>document.getElementById(id).classList.add('open');
@@ -812,7 +886,8 @@ function renderForn(){
         <div>
           <div class="li-name">${esc(f.nome)}</div>
           ${f.tel?`<div class="li-sub">📞 ${esc(f.tel)}</div>`:''}
-          <div class="li-sub" style="margin-top:5px">Prazo: <strong>${f.prazo}d</strong> · ${pgtoTag(f.pgto)} · <strong>${nV}</strong> aberto(s) = <strong style="color:var(--c1)">${fmtR(tV)}</strong></div>
+          <div class="li-sub" style="margin-top:5px">${pgtoTag(f.pgto)} · <strong>${nV}</strong> aberto(s) = <strong style="color:var(--c1)">${fmtR(tV)}</strong></div>
+          <div class="li-sub" style="color:var(--teal)">📅 ${regraDesc(f)}</div>
           ${f.obs?`<div class="li-sub">📝 ${esc(f.obs)}</div>`:''}
         </div>
         <div class="btns">
@@ -823,19 +898,33 @@ function renderForn(){
     </div>`;
   }).join('');
 }
+function togglePrazoField(){
+  const r=document.getElementById('ff-regra').value;
+  const isDias=r==='dias';
+  document.getElementById('ff-prazo-row').style.display=isDias?'grid':'none';
+  document.getElementById('ff-pgto-row').style.display=isDias?'none':'flex';
+}
 function openFornModal(id){
   editFornId=id||null;
   document.getElementById('mo-forn-t').textContent=id?'Editar Fornecedor':'Novo Fornecedor';
   const f=id?DB.fornecedores.find(x=>x.id===id):null;
   ['ff-nome','ff-tel','ff-obs'].forEach(i=>document.getElementById(i).value=f?.[i.replace('ff-','')]||'');
   document.getElementById('ff-prazo').value=f?.prazo||'';
-  document.getElementById('ff-pgto').value=f?.pgto||'PIX';
+  const regra=f?.regra||'dias';
+  document.getElementById('ff-regra').value=regra;
+  const pgto=f?.pgto||'PIX';
+  document.getElementById('ff-pgto').value=pgto;
+  document.getElementById('ff-pgto2').value=pgto;
+  togglePrazoField();
   openMo('mo-forn');
 }
 async function saveForn(){
   const nome=document.getElementById('ff-nome').value.trim();
   if(!nome){alert('Informe o nome.');return}
-  const obj={nome,tel:document.getElementById('ff-tel').value.trim(),prazo:parseInt(document.getElementById('ff-prazo').value)||0,pgto:document.getElementById('ff-pgto').value,obs:document.getElementById('ff-obs').value.trim(),created_by:CU.id};
+  const regra=document.getElementById('ff-regra').value;
+  const isDias=regra==='dias';
+  const pgto=isDias?document.getElementById('ff-pgto').value:document.getElementById('ff-pgto2').value;
+  const obj={nome,tel:document.getElementById('ff-tel').value.trim(),prazo:isDias?(parseInt(document.getElementById('ff-prazo').value)||0):0,pgto,regra,obs:document.getElementById('ff-obs').value.trim(),created_by:CU.id};
   try{
     if(editFornId){await API.upd('fornecedores',editFornId,obj);addLog('up','Fornecedor editado',nome)}
     else{await API.ins('fornecedores',obj);addLog('cr','Fornecedor criado',nome)}
@@ -1017,7 +1106,12 @@ function openValeModal(id){
 function updVencHint(){
   const f=DB.fornecedores.find(x=>x.id===document.getElementById('vv-forn').value);
   const dt=document.getElementById('vv-data').value;
-  document.getElementById('vv-hint').textContent=f&&dt?`Vencimento: ${fmtD(addDays(dt,f.prazo))} · prazo ${f.prazo}d · padrão: ${f.pgto}`:'';
+  if(f&&dt){
+    const venc=calcVencimento(dt,f);
+    document.getElementById('vv-hint').textContent=`Vencimento: ${fmtD(venc)} · ${regraDesc(f)} · pgto padrão: ${f.pgto}`;
+  }else{
+    document.getElementById('vv-hint').textContent='';
+  }
 }
 async function saveVale(){
   const fid=document.getElementById('vv-forn').value;
@@ -1027,7 +1121,7 @@ async function saveVale(){
   if(!fid||!dt){alert('Preencha fornecedor e data.');return}
   if(!val||val<=0){alert('Adicione ao menos um produto com quantidade e valor.');return}
   const f=DB.fornecedores.find(x=>x.id===fid);
-  const obj={forn_id:fid,data:dt,valor_original:val,pgto:document.getElementById('vv-pgto').value,descricao:desc,obs:document.getElementById('vv-obs').value,vencimento:addDays(dt,f?.prazo||0),status:'aberto',created_by:CU.id};
+  const obj={forn_id:fid,data:dt,valor_original:val,pgto:document.getElementById('vv-pgto').value,descricao:desc,obs:document.getElementById('vv-obs').value,vencimento:calcVencimento(dt,f),status:'aberto',created_by:CU.id};
   try{
     if(editValeId){await API.upd('vales',editValeId,obj);addLog('up','Vale editado',f?.nome+' · '+fmtR(val))}
     else{await API.ins('vales',obj);addLog('cr','Vale criado',f?.nome+' · '+fmtR(val)+' · vence '+fmtD(obj.vencimento))}
