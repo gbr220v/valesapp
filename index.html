@@ -331,7 +331,16 @@ alter table logs disable row level security;</div>
           <div><div class="pg-title">Vales a Pagar</div></div>
           <div class="btns" id="vales-acts"></div>
         </div>
-        <div class="fbar" id="vales-fbar"></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <div class="fbar" id="vales-fbar" style="margin-bottom:0;flex:1"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="vales-forn-bar">
+          <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t2);white-space:nowrap">Fornecedor:</span>
+          <select id="vf-forn-quick" onchange="vFornFilter=this.value;renderVales()" style="flex:1;min-width:160px;max-width:320px;padding:6px 10px;border:1.5px solid var(--brd2);border-radius:20px;font-size:12px;font-family:'Sora',sans-serif;background:var(--surf);color:var(--t1);cursor:pointer">
+            <option value="">Todos os fornecedores</option>
+          </select>
+          <span id="vf-forn-count" style="font-size:11px;color:var(--t3)"></span>
+        </div>
         <div id="vales-custom" style="display:none;margin-bottom:14px">
           <div class="card" style="padding:14px">
             <div class="fr">
@@ -636,7 +645,7 @@ async function doLogin(){
   await loadAll();
   goTo('dashboard');
 }
-function doLogout(){addLog('au','Logout',USERS[CU.id].name+' saiu');CU=null;selUID=null;selIds=new Set();vFilter='abertos';finFilter='30d';relFilter='semana';relOffset=0;logFilter='todos';DB={fornecedores:[],vales:[],devolucoes:[]};document.getElementById('app').style.display='none';document.getElementById('login-wrap').style.display='flex';document.querySelectorAll('.upill').forEach(p=>p.classList.remove('sel'));document.getElementById('l-user').value=''}
+function doLogout(){addLog('au','Logout',USERS[CU.id].name+' saiu');CU=null;selUID=null;selIds=new Set();vFilter='abertos';vFornFilter='';finFilter='30d';relFilter='semana';relOffset=0;logFilter='todos';DB={fornecedores:[],vales:[],devolucoes:[]};document.getElementById('app').style.display='none';document.getElementById('login-wrap').style.display='flex';document.querySelectorAll('.upill').forEach(p=>p.classList.remove('sel'));document.getElementById('l-user').value=''}
 
 function goTo(p){
   document.querySelectorAll('.pg').forEach(x=>x.classList.remove('act'));
@@ -956,11 +965,18 @@ async function delForn(id){
 // ════════════════════════════════════════════════
 // VALES
 // ════════════════════════════════════════════════
-let editValeId=null,vFilter='abertos',selIds=new Set();
+let editValeId=null,vFilter='abertos',vFornFilter='',selIds=new Set();
 function renderVales(){
   document.getElementById('vales-acts').innerHTML=can('create_vale')?`<button class="btn btn-primary" onclick="openValeModal(null)">+ Novo vale</button>`:'';
   const fDefs=[{id:'abertos',l:'Em aberto'},{id:'atrasados',l:'Atrasados'},{id:'7d',l:'Últ. 7 dias'},{id:'15d',l:'Últ. 15 dias'},{id:'30d',l:'Últ. 30 dias'},{id:'periodo',l:'Por período'},{id:'pagos',l:'Pagos'},{id:'todos',l:'Todos'}];
   document.getElementById('vales-fbar').innerHTML=fDefs.map(f=>`<button class="fb ${vFilter===f.id?'act':''}" onclick="vFilter='${f.id}';renderVales()">${f.l}</button>`).join('');
+  // populate quick fornecedor filter
+  const qsel=document.getElementById('vf-forn-quick');
+  if(qsel){
+    const prev=vFornFilter;
+    qsel.innerHTML='<option value="">Todos os fornecedores</option>'+DB.fornecedores.map(f=>`<option value="${f.id}" ${f.id===prev?'selected':''}>${esc(f.nome)}</option>`).join('');
+    qsel.value=prev;
+  }
   const custom=vFilter==='periodo';
   document.getElementById('vales-custom').style.display=custom?'block':'none';
   if(custom){document.getElementById('vf-forn-sel').innerHTML='<option value="">Todos os fornecedores</option>'+fornOpts('')}
@@ -983,7 +999,13 @@ function getValeList(){
     if(d1&&d2)l=l.filter(v=>v.vencimento>=d1&&v.vencimento<=d2);
     if(fi)l=l.filter(v=>v.forn_id===fi);
   }
-  return l.sort((a,b)=>a.vencimento.localeCompare(b.vencimento));
+  // apply quick fornecedor filter on top of any period filter
+  if(vFornFilter)l=l.filter(v=>v.forn_id===vFornFilter);
+  const sorted=l.sort((a,b)=>a.vencimento.localeCompare(b.vencimento));
+  // update count label
+  const cnt=document.getElementById('vf-forn-count');
+  if(cnt)cnt.textContent=vFornFilter&&sorted.length?`${sorted.length} vale${sorted.length!==1?'s':''}`:'' ;
+  return sorted;
 }
 function renderValesSummary(list){
   const tBruto=list.reduce((a,v)=>a+parseFloat(v.valor_original||0),0);
