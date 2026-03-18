@@ -334,6 +334,12 @@ alter table logs disable row level security;</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
           <div class="fbar" id="vales-fbar" style="margin-bottom:0;flex:1"></div>
         </div>
+        <div style="margin-bottom:10px">
+          <div style="position:relative;max-width:400px">
+            <input type="text" id="vales-search" placeholder="🔍 Buscar por nº do vale (ex: VP-A3F2C1), fornecedor ou produto..." oninput="renderVales()" style="width:100%;padding:9px 12px 9px 14px;border:1.5px solid var(--brd2);border-radius:20px;font-size:12px;font-family:'Sora',sans-serif;background:var(--surf);color:var(--t1);outline:none;transition:border .15s" onfocus="this.style.borderColor='var(--c1)'" onblur="this.style.borderColor='var(--brd2)'">
+            <button id="vales-search-clear" onclick="document.getElementById('vales-search').value='';renderVales()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--t3);line-height:1">×</button>
+          </div>
+        </div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="vales-forn-bar">
           <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t2);white-space:nowrap">Fornecedor:</span>
           <select id="vf-forn-quick" onchange="vFornFilter=this.value;renderVales()" style="flex:1;min-width:160px;max-width:320px;padding:6px 10px;border:1.5px solid var(--brd2);border-radius:20px;font-size:12px;font-family:'Sora',sans-serif;background:var(--surf);color:var(--t1);cursor:pointer">
@@ -969,7 +975,7 @@ let editValeId=null,vFilter='abertos',vFornFilter='',selIds=new Set();
 function renderVales(){
   document.getElementById('vales-acts').innerHTML=can('create_vale')?`<button class="btn btn-primary" onclick="openValeModal(null)">+ Novo vale</button>`:'';
   const fDefs=[{id:'abertos',l:'Em aberto'},{id:'atrasados',l:'Atrasados'},{id:'7d',l:'Últ. 7 dias'},{id:'15d',l:'Últ. 15 dias'},{id:'30d',l:'Últ. 30 dias'},{id:'periodo',l:'Por período'},{id:'pagos',l:'Pagos'},{id:'todos',l:'Todos'}];
-  document.getElementById('vales-fbar').innerHTML=fDefs.map(f=>`<button class="fb ${vFilter===f.id?'act':''}" onclick="vFilter='${f.id}';renderVales()">${f.l}</button>`).join('');
+  document.getElementById('vales-fbar').innerHTML=fDefs.map(f=>`<button class="fb ${vFilter===f.id?'act':''}" onclick="vFilter='${f.id}';const s=document.getElementById('vales-search');if(s)s.value='';renderVales()">${f.l}</button>`).join('');
   // populate quick fornecedor filter
   const qsel=document.getElementById('vf-forn-quick');
   if(qsel){
@@ -1001,6 +1007,21 @@ function getValeList(){
   }
   // apply quick fornecedor filter on top of any period filter
   if(vFornFilter)l=l.filter(v=>v.forn_id===vFornFilter);
+  // apply text search (number, fornecedor name, product description)
+  const q=(document.getElementById('vales-search')?.value||'').trim().toLowerCase();
+  if(q){
+    l=l.filter(v=>{
+      const num=('VP-'+v.id.slice(-6).toUpperCase()).toLowerCase();
+      const f=DB.fornecedores.find(x=>x.id===v.forn_id);
+      const fname=(f?.nome||'').toLowerCase();
+      const desc=(v.descricao||'').toLowerCase();
+      const obs=(v.obs||'').toLowerCase();
+      return num.includes(q)||fname.includes(q)||desc.includes(q)||obs.includes(q);
+    });
+  }
+  // show/hide clear button
+  const clr=document.getElementById('vales-search-clear');
+  if(clr)clr.style.display=q?'block':'none';
   const sorted=l.sort((a,b)=>a.vencimento.localeCompare(b.vencimento));
   // update count label
   const cnt=document.getElementById('vf-forn-count');
@@ -1045,7 +1066,7 @@ function renderValeItem(v){
       <div style="flex:1;min-width:0">
         <div class="li-name">${esc(f?.nome||'Fornecedor removido')}</div>
         <div class="li-sub">${esc(v.descricao||'—')}</div>
-        <div class="li-sub">📅 Retirada: ${fmtD(v.data)} · Vence: <strong>${fmtD(v.vencimento)}</strong></div>
+        <div class="li-sub">📅 Retirada: ${fmtD(v.data)} · Vence: <strong>${fmtD(v.vencimento)}</strong> · <span class="mono" style="font-size:10px;color:var(--t3)">Nº VP-${v.id.slice(-6).toUpperCase()}</span></div>
         ${tAbat>0?`<div class="li-sub" style="color:var(--purp)">↩ Abatimento: −${fmtR(tAbat)} (${abats.length} item${abats.length>1?'s':''})</div>`:''}
         ${trocas.length?`<div class="li-sub" style="color:var(--teal)">🔄 ${trocas.length} troca(s) por numeração</div>`:''}
         ${v.status==='pago'?`<div class="li-sub" style="color:var(--grn)">✓ Pago ${fmtD(v.pago_em)} · ${esc(v.pgto_real||'')} · por ${USERS[v.pago_by]?.name||v.pago_by||'?'}</div>`:''}
