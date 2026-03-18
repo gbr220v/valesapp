@@ -1035,6 +1035,7 @@ function renderValeItem(v){
   if(v.status==='pago'&&!v.comp_data&&can('mark_payment'))acts+=`<button class="btn btn-sm btn-info" onclick="openAnexarComp('${v.id}')">📎 Anexar comprovante</button>`;
   if(v.status==='pago'&&CU.role==='admin')acts+=`<button class="btn btn-sm" onclick="desfazerPgto('${v.id}')">Desfazer</button>`;
   if(can('create_dev')&&v.status!=='pago')acts+=`<button class="btn btn-sm btn-purp" onclick="openDevModal('${v.id}')">↩ Devolução</button>`;
+  if(can('create_vale')||CU.role==='admin')acts+=`<button class="btn btn-sm" onclick="imprimirVale('${v.id}')">🖨 Imprimir</button>`;
   if(can('edit_vale'))acts+=`<button class="btn btn-sm" onclick="openValeModal('${v.id}')">Editar</button>`;
   if(CU.role==='admin')acts+=`<button class="btn btn-sm btn-danger" onclick="delVale('${v.id}')">Excluir</button>`;
   const showChk=can('mark_payment')&&v.status!=='pago';
@@ -1166,9 +1167,107 @@ async function saveVale(){
   const obj={forn_id:fid,data:dt,valor_original:val,pgto:document.getElementById('vv-pgto').value,descricao:desc,obs:document.getElementById('vv-obs').value,vencimento:calcVencimento(dt,f),status:'aberto',created_by:CU.id};
   try{
     if(editValeId){await API.upd('vales',editValeId,obj);addLog('up','Vale editado',f?.nome+' · '+fmtR(val))}
-    else{await API.ins('vales',obj);addLog('cr','Vale criado',f?.nome+' · '+fmtR(val)+' · vence '+fmtD(obj.vencimento))}
+    else{
+      const saved=await API.ins('vales',obj);
+      addLog('cr','Vale criado',f?.nome+' · '+fmtR(val)+' · vence '+fmtD(obj.vencimento));
+      await loadAll();closeMo('mo-vale');renderVales();renderDash();
+      if(confirm('Vale criado! Deseja imprimir agora?')){
+        const vId=saved?.id||DB.vales.find(x=>x.forn_id===obj.forn_id&&x.data===obj.data&&x.valor_original===obj.valor_original)?.id;
+        if(vId)imprimirVale(vId);
+      }
+      return;
+    }
     await loadAll();closeMo('mo-vale');renderVales();renderDash();
   }catch(e){alert('Erro: '+e.message)}
+}
+function imprimirVale(id){
+  const v=DB.vales.find(x=>x.id===id);
+  if(!v){alert('Vale não encontrado.');return}
+  const f=DB.fornecedores.find(x=>x.id===v.forn_id);
+  const abats=DB.devolucoes.filter(d=>d.vale_id===v.id&&d.tipo==='abatimento');
+  const trocas=DB.devolucoes.filter(d=>d.vale_id===v.id&&d.tipo==='troca');
+  const tAbat=abats.reduce((a,d)=>a+parseFloat(d.valor_abatido||0),0);
+  const liq=valeLiq(v);
+  // Parse products from description
+  const prods=[];
+  if(v.descricao){
+    const parts=v.descricao.split(' | ');
+    parts.forEach(p=>{
+      const m=p.match(/^(.+?)\s*\((\d+(?:\.\d+)?)x\s*R\$(\d+(?:\.\d+)?)\s*=/);
+      if(m){prods.push({nome:m[1].trim(),qtd:parseFloat(m[2]),unit:parseFloat(m[3]),sub:parseFloat(m[2])*parseFloat(m[3])})}
+      else if(p.trim())prods.push({nome:p.trim(),qtd:'',unit:'',sub:null});
+    });
+  }
+  const num='VP-'+id.slice(-6).toUpperCase();
+  const viaHTML=(via)=>`
+    <div style="font-family:Arial,sans-serif;width:100%;border:1.5px solid #222;border-radius:6px;padding:18px 20px;page-break-inside:avoid">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:2px solid #222;padding-bottom:12px">
+        <div>
+          <div style="font-size:20px;font-weight:900;letter-spacing:-0.5px;color:#222">Franca Griffe</div>
+          <div style="font-size:11px;color:#555;margin-top:2px">Vale de Pedido a Fornecedor</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:13px;font-weight:700;color:#222">${num}</div>
+          <div style="font-size:10px;color:#777;margin-top:2px">${via}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:12px">
+        <div><span style="color:#777;font-size:10px;text-transform:uppercase;letter-spacing:.4px">Fornecedor</span><div style="font-weight:700;margin-top:2px">${(f?.nome||'—').replace(/</g,'&lt;')}</div>${f?.tel?`<div style="color:#555">${f.tel}</div>`:''}</div>
+        <div style="text-align:right"><span style="color:#777;font-size:10px;text-transform:uppercase;letter-spacing:.4px">Datas</span><div style="font-weight:700;margin-top:2px">Retirada: ${fmtD(v.data)}</div><div style="color:#555">Vencimento: ${fmtD(v.vencimento)}</div>${f?.pgto?`<div style="color:#555">Pgto: ${f.pgto}</div>`:''}</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+        <thead><tr style="background:#f0f0f0">
+          <th style="text-align:left;padding:7px 8px;border:1px solid #ccc;font-size:10px;text-transform:uppercase">Produto / Descrição</th>
+          <th style="text-align:center;padding:7px 8px;border:1px solid #ccc;font-size:10px;text-transform:uppercase;width:60px">Qtd.</th>
+          <th style="text-align:right;padding:7px 8px;border:1px solid #ccc;font-size:10px;text-transform:uppercase;width:90px">Vl. Unit.</th>
+          <th style="text-align:right;padding:7px 8px;border:1px solid #ccc;font-size:10px;text-transform:uppercase;width:90px">Subtotal</th>
+        </tr></thead>
+        <tbody>
+          ${prods.length?prods.map(p=>`<tr><td style="padding:6px 8px;border:1px solid #ddd">${p.nome.replace(/</g,'&lt;')}</td><td style="padding:6px 8px;border:1px solid #ddd;text-align:center">${p.qtd||'—'}</td><td style="padding:6px 8px;border:1px solid #ddd;text-align:right">${p.unit?fmtR(p.unit):'—'}</td><td style="padding:6px 8px;border:1px solid #ddd;text-align:right;font-weight:600">${p.sub!==null?fmtR(p.sub):'—'}</td></tr>`).join(''):`<tr><td colspan="4" style="padding:8px;border:1px solid #ddd;color:#555">${(v.descricao||'Sem descrição').replace(/</g,'&lt;')}</td></tr>`}
+        </tbody>
+        ${tAbat>0?`<tfoot><tr><td colspan="3" style="padding:6px 8px;border:1px solid #ddd;text-align:right;color:#7C3AED;font-weight:600">Abatimento por devolução</td><td style="padding:6px 8px;border:1px solid #ddd;text-align:right;color:#7C3AED;font-weight:600">−${fmtR(tAbat)}</td></tr></tfoot>`:''}
+      </table>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:${v.obs?'8px':'14px'}">
+        <div style="background:#f8f8f8;border:1.5px solid #222;border-radius:6px;padding:10px 18px;text-align:right">
+          ${tAbat>0?`<div style="font-size:11px;color:#777;text-decoration:line-through">Original: ${fmtR(v.valor_original)}</div>`:''}
+          <div style="font-size:22px;font-weight:900;color:#222">TOTAL: ${fmtR(liq)}</div>
+        </div>
+      </div>
+      ${v.obs?`<div style="font-size:11px;color:#555;margin-bottom:14px;padding:8px;background:#fafafa;border-radius:4px;border:1px solid #e0e0e0">📝 Obs: ${v.obs.replace(/</g,'&lt;')}</div>`:''}
+      ${trocas.length?`<div style="font-size:11px;color:#555;margin-bottom:14px">🔄 Trocas registradas: ${trocas.map(t=>`${(t.item_original||'?').replace(/</g,'&lt;')} → ${(t.item_trocado||'?').replace(/</g,'&lt;')}`).join(', ')}</div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:16px;border-top:1px dashed #bbb;padding-top:16px">
+        <div>
+          <div style="font-size:10px;color:#777;text-transform:uppercase;letter-spacing:.4px;margin-bottom:28px">Assinatura — Empresa</div>
+          <div style="border-bottom:1.5px solid #222;width:100%"></div>
+          <div style="font-size:10px;color:#777;margin-top:4px">Franca Griffe</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:#777;text-transform:uppercase;letter-spacing:.4px;margin-bottom:28px">Assinatura — Fornecedor</div>
+          <div style="border-bottom:1.5px solid #222;width:100%"></div>
+          <div style="font-size:10px;color:#777;margin-top:4px">${(f?.nome||'').replace(/</g,'&lt;')}</div>
+        </div>
+      </div>
+    </div>`;
+  const w=window.open('','_blank','width=800,height:900');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Vale ${num}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;background:#fff;padding:20px}
+    .page{max-width:720px;margin:0 auto}
+    .divider{border:none;border-top:2px dashed #bbb;margin:20px 0;position:relative}
+    .divider::after{content:'✂ cortar aqui';position:absolute;left:50%;transform:translateX(-50%);top:-8px;background:#fff;padding:0 10px;font-size:10px;color:#999;font-family:Arial,sans-serif}
+    .btn-print{display:block;width:100%;max-width:200px;margin:0 auto 20px;padding:10px;background:#0F766E;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif}
+    @media print{.btn-print{display:none!important}.divider::after{display:none}}
+  </style>
+  </head><body>
+  <button class="btn-print" onclick="window.print()">🖨 Imprimir</button>
+  <div class="page">
+    ${viaHTML('1ª Via — Empresa (Franca Griffe)')}
+    <hr class="divider">
+    ${viaHTML('2ª Via — Fornecedor')}
+  </div>
+  </body></html>`);
+  w.document.close();
 }
 async function delVale(id){
   if(!confirm('Excluir este vale?'))return;
